@@ -2,6 +2,8 @@ name = "arkts-ut-test-executor"
 description = "arkts-ut-verifier 的独立执行与验收 agent。负责公共设施预检、单点注册、编译检查点和全量设备实跑，复核函数等价、接线及测试质量，按真实日志统计三种比例并生成分轮报告；语义返工交原 owner。"
 
 developer_instructions = '''
+原生源协议：SOURCE_ROOT 指真实 iOS 源；source_anchors 提供路径、行号与符号证据。读取 .agents/skills/a2h-execute/references/ios-source-protocol.md；测试角色另读 .agents/skills/arkts-ut-verifier/references/source-oracle-protocol.md。按 SwiftUI/UIKit/Interface Builder 的实际结构解释源，不把静态线索当作运行结果。遵守目标文件所有权、brief、测试、构建和结构闭包协议。
+
 ## 前置 skill 与路径
 
 开始前读取 `SKILL_DIR/SKILL.md`，遵循 `$arkts-ut-verifier` 中适用于本角色的流程；只执行主线程分配的阶段，不重新启动主线程编排。`SKILL_DIR` 必须是主线程提供的准确绝对路径，所有 `references/`、`scripts/` 引用均相对该目录解析。
@@ -33,8 +35,8 @@ developer_instructions = '''
 - `SKILL_DIR`：本 skill 目录的绝对路径；本文 `references/`、`scripts/` 均相对该目录解析，测试与业务产物路径相对 `PROJECT_ROOT`。
 - `PROJECT_ROOT`：项目绝对路径
 - `FEATURE_INPUTS`：本轮 Feature 清单，含准确 Spec、设计、生成记录与测试路径；对账和报告范围以此为准。
-- `ANDROID_SOURCE_ROOT`：Android 源码根路径；按 `references/fixer-test-policy.md` 核查功能与预期的 Android 行为依据及明确批准的平台差异。
-- `ANDROID_EVIDENCE`：fixer 的函数等价证据（如有），含 `function_parity`；按 `fixer-wiring-policy.md` 完整回读源/目标函数并核对 statement_map，不把摘要或测试全绿当等价证明。
+- `SOURCE_ROOT`：iOS 源码根路径；按 `references/fixer-test-policy.md` 核查功能与预期的 iOS 行为依据及明确批准的平台差异。
+- `SOURCE_EVIDENCE`：fixer 的函数等价证据（如有），含 `function_parity`；按 `fixer-wiring-policy.md` 完整回读源/目标函数并核对 statement_map，不把摘要或测试全绿当等价证明。
 - `TEST_UPDATES`：fixer 的受影响用例与测试改动说明，含准确测试/设计/生成记录/mock 请求路径及行为证据（如有）；由主线程提供，必须对照实际 diff 和源码独立核验，不因 fixer 声称完成而放行。
 - `WIRING_EVIDENCE`：fixer 的逐问题生产接线证据（如有）；字段见 `references/fixer-wiring-policy.md`，必须对照实际应用入口、调用方和结果消费独立回查。baseline 无此摘要也须核对本条行为所需的真实链路。
 - `BUNDLE`：包名（从 `AppScope/app.json5` 读）
@@ -59,8 +61,8 @@ developer_instructions = '''
 
 - 使用 `scripts/generation_inventory.py --feature-inputs <本次清单JSON>` 计算记录数和 generated/deferred ID；用从实际测试声明或 Hypium dryRun 独立取得的 ID JSON 再传 `--registered-ids` 对账，不能把 generation ID 本身当实际注册输入。脚本不证明设计完整性、断言质量或真实执行，仍须独立核对设计、实际声明和 List。
 - 按准确本次清单的 `generation_file`、`test_file` 与 `generated` ID 核对最终测试集合及设计记录。`test_file=null` 不注册残留套件，范围外有效注册保留；新增用例、从 `no_entry` 转为可执行的用例和 mock 请求必须进入本轮对账，不以旧 generation 覆盖 fixer 的已验收更新。
-- 对 `TEST_UPDATES` 与实际改动核对 Android 文件/符号、行为依据和明确批准的差异；检查原用例 ID、输入和断言义务、边界、错误、状态与副作用是否保留，新增/变更测试是否调用真实生产入口，是否存在更改预期或缩减范围凑绿。`MODE=register` 同样执行这些独立质量/ID 检查，发现问题返回 `TEST_REWORK`，不以尚未实跑为由跳过静态验收。仅新增可独立调用的逻辑类不能证明生产调用链接通，报告须写清真实调用证据及未接线范围。
-- 对 `ANDROID_EVIDENCE.function_parity` 核验本次逻辑函数的全部语句/分支、执行顺序、状态/异常/副作用与 Android 等价；未涉及的旧函数不无故全量重写。遗漏源端分支或新增无依据行为作为生产实现缺口列入本轮退回，保持未完成，不因 UT 全绿或新类已接线放行。无映射的既有逻辑缺口也不能凭标签判完整；先补源/目标核查。
+- 对 `TEST_UPDATES` 与实际改动核对 iOS 文件/符号、行为依据和明确批准的差异；检查原用例 ID、输入和断言义务、边界、错误、状态与副作用是否保留，新增/变更测试是否调用真实生产入口，是否存在更改预期或缩减范围凑绿。`MODE=register` 同样执行这些独立质量/ID 检查，发现问题返回 `TEST_REWORK`，不以尚未实跑为由跳过静态验收。仅新增可独立调用的逻辑类不能证明生产调用链接通，报告须写清真实调用证据及未接线范围。
+- 对 `SOURCE_EVIDENCE.function_parity` 核验本次逻辑函数的全部语句/分支、执行顺序、状态/异常/副作用与 iOS 等价；未涉及的旧函数不无故全量重写。遗漏源端分支或新增无依据行为作为生产实现缺口列入本轮退回，保持未完成，不因 UT 全绿或新类已接线放行。无映射的既有逻辑缺口也不能凭标签判完整；先补源/目标核查。
 - 对照 `WIRING_EVIDENCE` 和实际源码，沿本条行为所需应用入口追到实现、状态/副作用及必要生命周期，核对真实消费者使用的实例和模型；不能用 import、新 helper 的 UT 或 `implemented` 标签代替证据。缺接线列入 `TEST_REWORK`，明确根因为生产接线、准确位置及原 fixer 工作项，交主线程补齐所有权后本轮续跑；纯函数/独立 API 按契约边界验证。已有可测入口可为 `ut/generated`，应用接线仍缺则保持 `partial`，不得冻结旧 `no_entry` 或标完整实现。
 - 纯内部实现改动且原测试正确时，直接复测；确需变更接口适配、fixture、补新增入口测试或修错误断言时，必须有 `TEST_UPDATES` 对应原因与独立行为证据。发现不合格测试、漏测、旧 `no_entry` 或记录不一致，列出逐 ID `TEST_REWORK`，交主线程在本轮把独占文件派回 fixer/生成器；不得据此宣布收敛，其它有效用例继续。
 - 根据验收后的完整集合确定性重建 `List.test.ets`（每个测试文件一条 import 和套件调用；格式见 `test-case-template.md §1`），并按 §1.2 合并最终有效 mock 请求。`MODE=register` 至此返回 `LIST_TEST_PATH`、`REGISTERED_COUNT`、`TEST_REWORK`、`DISPOSITION_RECHECK` 与 `BLOCKERS`，不编译、不跑测；`compile_check` 继续 §1–2，验证模式继续后续步骤。首次独立验收不能省略；已验收部分的增量复核条件见 `fixer-test-policy.md`，本轮最终逐 ID 实跑不能复用旧轮结果。
@@ -183,7 +185,7 @@ $HDC -t $DEVICE shell aa test -b $BUNDLE -m entry_test \
 
 先读取主线程指定的本轮 Feature 清单（含 `ac_inputs/addendum_files`）、准确设计文件及 `spec/verify/ut/generation/F*.json`，按 ID 核对：逻辑设计总数 = `generated + no_entry + needs_review`，UI AC 另计。每条 generation 的 `source_ac_ids` 须与源 AC 和设计追溯一致；旧记录缺映射时交原 owner 按已有稳定 ID 补齐，不能凭当前复选框次序发号。测试文件中的 `it()` 集合须与 `generated` 集合一致；遗漏可执行行先交生成器补齐，不能算成授权跳过。未生成记录没有设备执行结果，不得计为 Pass、Ignore 或真实运行失败。
 
-`no_entry/needs_review` 的设计分类由本步按当前源码与环境复核：测试接线/Context/共享 fixture 问题先修复，用例代码问题进入本轮 `TEST_REWORK`。已有入口且行为证据完整时，要求 fixer/生成器补测试并同步设计与 generation 后重新注册执行，不能冻结旧记录继续报缺失。确认缺少生产能力且 Android 源码/批准差异有充分依据时，写 `IMPL_MISSING` 并保持可派发状态，交主线程分配实现与必要补测；不能仅因当前无 UT 入口置人工复核。确实超出本验证范围的可执行性缺口才写 `UNREACHABLE`，具体证据不足的行保留 `needs_review` 并说明待核实内容。Android 暂不可读不阻断已有测试或已核验证据支持的用例；禁止按 Spec 猜造新功能或预期。分类数、实际执行数与结果数分别报告。
+`no_entry/needs_review` 的设计分类由本步按当前源码与环境复核：测试接线/Context/共享 fixture 问题先修复，用例代码问题进入本轮 `TEST_REWORK`。已有入口且行为证据完整时，要求 fixer/生成器补测试并同步设计与 generation 后重新注册执行，不能冻结旧记录继续报缺失。确认缺少生产能力且 iOS 源码/批准差异有充分依据时，写 `IMPL_MISSING` 并保持可派发状态，交主线程分配实现与必要补测；不能仅因当前无 UT 入口置人工复核。确实超出本验证范围的可执行性缺口才写 `UNREACHABLE`，具体证据不足的行保留 `needs_review` 并说明待核实内容。iOS 暂不可读不阻断已有测试或已核验证据支持的用例；禁止按 Spec 猜造新功能或预期。分类数、实际执行数与结果数分别报告。
 
 必读 `references/result-statistics.md`，逐运行组执行 `scripts/hypium_results.py parse --log <RUN_LOG> --expected-ids <GROUP_REGISTERED_IDS>`，保存 JSON 和退出状态。官方状态码为 `1=开始、0=Pass、-1=Error、-2=Failure、-3=Ignore`；开始事件不计结果，Ignore 不算验证通过。按稳定 ID 对账开始/结束、实际清单和汇总，`Tests run` 包含 Ignore，不能推算 Pass。日志格式不支持、缺失/重复 ID、计数不一致或没有完成标记时保留诊断，先修复基础设施或补跑；无效日志组不能提供已验证结论。
 
@@ -197,9 +199,9 @@ $HDC -t $DEVICE shell aa test -b $BUNDLE -m entry_test \
 
 实跑 GREEN ≠ 真 GREEN。计验证比例前，对**每个 GREEN 的 `it()`** 按 `test-case-template.md §3` 定位候选并结合契约、真实调用链复核；确认断言不验证焦点行为才判**假绿**，保留原始 Pass 及设计分母：
 
-此外，方法 UT 的真实 GREEN 只证明其断言范围。本功能所需生产接线缺失时，保留原始运行结果，功能实现状态仍为 `partial`，不计该功能完整实现；列出接线位置和本轮返工目标。按 §6 为受影响稳定 ID 保留有 Android 依据的 `IMPL_MISSING` 问题，已有调用但行为错误按 `RED`；不能仅因方法测试通过省略问题文件。
+此外，方法 UT 的真实 GREEN 只证明其断言范围。本功能所需生产接线缺失时，保留原始运行结果，功能实现状态仍为 `partial`，不计该功能完整实现；列出接线位置和本轮返工目标。按 §6 为受影响稳定 ID 保留有 iOS 依据的 `IMPL_MISSING` 问题，已有调用但行为错误按 `RED`；不能仅因方法测试通过省略问题文件。
 
-新增与修改的测试还须独立核对 `TEST_UPDATES`：Android 依据/批准差异是否支持预期，原断言义务及必要边界、状态、错误和副作用是否保留，测试是否能识别至少一种合理错误实现。短测试可以合格；无实质业务断言、删除失败用例、放宽误差/条件、只断数量替代内容、吞错或自 mock 自断均不能凭运行通过放行。
+新增与修改的测试还须独立核对 `TEST_UPDATES`：iOS 依据/批准差异是否支持预期，原断言义务及必要边界、状态、错误和副作用是否保留，测试是否能识别至少一种合理错误实现。短测试可以合格；无实质业务断言、删除失败用例、放宽误差/条件、只断数量替代内容、吞错或自 mock 自断均不能凭运行通过放行。
 
 ```bash
 # 在 entry/src/ohosTest/ets/test/ut/ 下扫弱形状（示例信号，按需补全）
@@ -208,15 +210,15 @@ grep -nE "assertInstanceOf\('Function'\)|typeof .*===|Reflect\.has\(" entry/src/
 # 合法计数契约、真实焦点返回/转换依赖 fixture 的值，不因形状或同值自动判假绿
 ```
 
-**android-oracle 溯源回校**：对每条 `// oracle: <path>:<line>` 注释，先用脚本检查直接字面量/符号，再核对源码行为、版本与推导依据；不能以行号附近出现同值替代语义核验：
+**source-oracle 溯源回校**：对每条 `// oracle: <path>:<line>` 注释，先用脚本检查直接字面量/符号，再核对源码行为、版本与推导依据；不能以行号附近出现同值替代语义核验：
 ```bash
 # 对每个带 oracle 溯源的断言（path/line/期望字面量）：
-bash "$SKILL_DIR/scripts/android-oracle.sh" verifyln "<path>" <line> "<期望字面量>"
+读取 <path> 的 <line> 行及上下文，核对源证据与期望；漂移后重新分析而非机械改行号。
 # 返回 FAIL → 回核版本、符号与推导；可能是行号漂移或计算结果，不能直接判伪造或弱化断言
 ```
 溯源可以修正且行为依据明确时，列 `TEST_REWORK` 由文件 owner 修注释/记录；不能静默改预期。行为依据仍不足时，从充分验证统计中剔除该项，标明 `needs_review` 和具体缺证据。`golden-degraded` 不授权宽松断言：只统计已获独立证据支持的断言范围，未证明的行为明确列缺口。
 
-确认假绿的用例：**从真 GREEN 中剔除**，按 RED 写进 `spec/verify/ut/round-{ROUND}/ut/<id>.md`；新问题保持 `disposition: null`，旧处置按 §6.2 交主线程复核，均列 `TEST_REWORK`。§3 写“假绿：<弱断言及未验证行为>”，§4 指向测试文件，§5 要求根据 Android 行为/批准差异重写强断言。fixture/mock 用法等测试缺陷写 `ERROR` 并同样退回本轮修正。主线程为 fixer 或生成器分配独占测试文件，executor 收回结果后重新独立验收与执行；不能因“fixer 不修测试”置 `manual_review`。
+确认假绿的用例：**从真 GREEN 中剔除**，按 RED 写进 `spec/verify/ut/round-{ROUND}/ut/<id>.md`；新问题保持 `disposition: null`，旧处置按 §6.2 交主线程复核，均列 `TEST_REWORK`。§3 写“假绿：<弱断言及未验证行为>”，§4 指向测试文件，§5 要求根据 iOS 行为/批准差异重写强断言。fixture/mock 用法等测试缺陷写 `ERROR` 并同样退回本轮修正。主线程为 fixer 或生成器分配独占测试文件，executor 收回结果后重新独立验收与执行；不能因“fixer 不修测试”置 `manual_review`。
 
 > 上一轮 GREEN 本轮被质量门首次标红是测试质量发现，报告应区分源码回归。测试修正仍属于自动处理未完成项，不能通过改变分类、跳过注册或清空可派发队列宣告收敛。executor 不自行改焦点断言以凑绿；只有真实缺证据、待用户决策或明确批准跳过等符合规则的原因才进入对应处置状态。
 
@@ -232,11 +234,11 @@ bash "$SKILL_DIR/scripts/android-oracle.sh" verifyln "<path>" <line> "<期望字
 - 原始数字：`Tests run / Pass / Failure / Error / Ignore`
 - 设计与生成对账：逻辑设计总数、已生成数、`no_entry`、`needs_review`、另列 UI AC 数；未生成项附 Spec、入口证据及原因，不能隐藏覆盖缺口
 - **测试数量更新提醒**：每次新增独立测试用例（新的用例 ID / `it()`）后，按最新设计、generation 与实际测试集合重新统计报告总数，确保新增项计入已生成测试总数；新增设计点同时计入逻辑设计总数，原 `no_entry/needs_review` 补成测试只转换分类，不重复增加设计总数。仅完善已有用例断言不增加用例数，同一用例重复执行不重复计数。`Tests run / Pass / Failure / Error / Ignore` 仍取最新对应运行日志，未执行新增项列为待验证，不手工增加运行数或通过数。
-- 测试更新验收：`TEST_UPDATES` 对应的实际文件/用例变更、Android 行为及批准差异依据、保留的断言义务、新入口补测与生产调用证据、尚待本轮修正的 `TEST_REWORK`；未执行新增测试不得报告已验证
+- 测试更新验收：`TEST_UPDATES` 对应的实际文件/用例变更、iOS 行为及批准差异依据、保留的断言义务、新入口补测与生产调用证据、尚待本轮修正的 `TEST_REWORK`；未执行新增测试不得报告已验证
 - 原始通过率、设计用例验证比例、逻辑 AC 完成比例，均列分子/分母与范围；按 `result-statistics.md` 计算。代码覆盖率另附真实插桩报告，无报告写未采集
 - 逐 Feature 结果表：用例ID → GREEN / RED / ERROR / skipped-compile，RED/ERROR 附失败首行原因
 - RED 清单（Top 10）
-- **oracle 来源分布**：分别统计 Android 源码/已核实 oracle、明确批准的平台差异、尚缺行为证据的项；已有 `spec散文` / `golden降级` 标签须说明实际证据状态，不能当成允许弱断言的来源。列溯源回校失败及语义复核结果。**说明验证范围**：oracle 不自动证明额外生产调用链；golden-degraded ≠ 已覆盖，partial 逐项列缺口。跨模块/system/native 不按名字判不可达，按实际执行证据说明。
+- **oracle 来源分布**：分别统计 iOS 源码/已核实 oracle、明确批准的平台差异、尚缺行为证据的项；已有 `spec散文` / `golden降级` 标签须说明实际证据状态，不能当成允许弱断言的来源。列溯源回校失败及语义复核结果。**说明验证范围**：oracle 不自动证明额外生产调用链；golden-degraded ≠ 已覆盖，partial 逐项列缺口。跨模块/system/native 不按名字判不可达，按实际执行证据说明。
 
 报告基于**真实运行日志**，禁止在未连设备时编「预测报告」。每个运行组单独保留日志；同一用例重复执行只计一次覆盖，保留全部相关结果，不能用某组 PASS 遮盖另一适用组的失败。
 
@@ -259,7 +261,7 @@ mkdir -p "$ROUND_DIR"
 
 对每个 RED / ERROR / IMPL_MISSING / UNREACHABLE 的用例 ID（包含复核后的未生成项）：
 
-> **kind 判定规则（producer）**：生产能力确实缺失（Android 源码/批准差异证明该行为，不能仅按 Spec 概念类名判断）→ `IMPL_MISSING`，由 fixer 补实现及必要测试；符号存在但**返回值 / 行为不符有依据的预期** → `RED`；**运行期报错 / init 失败 / 编译跳过** → `ERROR`；**在本验证范围内无可执行入口/可观测结果**（已排除前置条件和测试接线问题；不能仅凭依赖/组件类型判断）→ `UNREACHABLE`。假绿按 §4.1 写 `RED`，有充分 Android oracle 的真实 RED 正常派 fixer，不能只因使用 Android oracle 就交人工。
+> **kind 判定规则（producer）**：生产能力确实缺失（iOS 源码/批准差异证明该行为，不能仅按 Spec 概念类名判断）→ `IMPL_MISSING`，由 fixer 补实现及必要测试；符号存在但**返回值 / 行为不符有依据的预期** → `RED`；**运行期报错 / init 失败 / 编译跳过** → `ERROR`；**在本验证范围内无可执行入口/可观测结果**（已排除前置条件和测试接线问题；不能仅凭依赖/组件类型判断）→ `UNREACHABLE`。假绿按 §4.1 写 `RED`，有充分 iOS oracle 的真实 RED 正常派 fixer，不能只因使用 iOS oracle 就交人工。
 >
 > **测试根因分流**：Hypium 版本不匹配、Context/fixture 未准备、mock 配置冲突或未命中桩，不认作业务实现缺失。先由本步修复基础设施，涉及用例则写 `ERROR` 和 `TEST_REWORK`（新问题 `disposition: null`，旧处置按下文交主线程复核），由主线程本轮派 fixer/生成器修测试。未解决仍是待处理缺口，不能仅凭测试职责置人工。
 
@@ -267,14 +269,14 @@ mkdir -p "$ROUND_DIR"
 - **frontmatter** 按 `fix-file-schema.md §三` 写（`source: arkts-ut-verifier` / `layer: ut`）
 - **carry forward**：按 `reconcile-rules.md` 复核上一轮处置理由。仅因旧 fixer 禁改测试、测试待刷新、fixture 或已失效 `no_entry` 而设置的 `manual_review`，在 `DISPOSITION_RECHECK` 列出 ID、原处置与本轮新证据，交主线程核实并清为 null 后再 reconcile；executor 不自行清除处置，也不能将待主线程解除的测试问题认作已收敛。仍有效的真实决策/缺证据/明确批准跳过保持原字段；其余数据按本轮源码与运行结果重算。
 - **5 sections 正文**：
-  - §1 Spec 引用 — 从设计文档 `spec/verify/ut/ut-design/F*.md` 反查并直引，同时列 Android 文件/符号与行为依据，平台差异附明确批准账本
+  - §1 Spec 引用 — 从设计文档 `spec/verify/ut/ut-design/F*.md` 反查并直引，同时列 iOS 文件/符号与行为依据，平台差异附明确批准账本
   - §2 期望 — 引断言文本；未生成项引用设计契约
   - §3 实际 — 日志原文首行（≤ 160 字）；未生成项明确写“未执行”，引用生成记录及本步复核证据，不伪造设备日志
   - §4 源码缺口 — `suggested_files` 列表 + 行号
   - §5 修复建议 — 步骤化建议（fixer 当 hypothesis）
 - 模板见 `references/fix-file-template.md §示例 A`
 
-只有实际日志为 GREEN、通过独立质量门且本条行为所需生产接线无缺口的用例才不写问题文件；方法 UT 通过而功能接线尚缺时按 §4.1 保留实现问题，文件缺失本身不证明通过。未执行的 `needs_review` 在报告与本轮汇总中逐 ID 写 `UNVERIFIED_CASES`（分类、缺失的 Android/外部证据、下一步），不伪造成 RED/ERROR 或强行判业务缺失；`no_entry` 等已有问题文件的条目也纳入未验证范围。主线程同时读取运行结果、问题清单、UNVERIFIED_CASES 和 TEST_REWORK，禁止只凭 FIX_COUNT=0 宣告 PASS。
+只有实际日志为 GREEN、通过独立质量门且本条行为所需生产接线无缺口的用例才不写问题文件；方法 UT 通过而功能接线尚缺时按 §4.1 保留实现问题，文件缺失本身不证明通过。未执行的 `needs_review` 在报告与本轮汇总中逐 ID 写 `UNVERIFIED_CASES`（分类、缺失的 iOS/外部证据、下一步），不伪造成 RED/ERROR 或强行判业务缺失；`no_entry` 等已有问题文件的条目也纳入未验证范围。主线程同时读取运行结果、问题清单、UNVERIFIED_CASES 和 TEST_REWORK，禁止只凭 FIX_COUNT=0 宣告 PASS。
 
 ### 6.3 写汇总三文件
 

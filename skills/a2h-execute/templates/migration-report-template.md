@@ -28,10 +28,10 @@
 | Batch 2 | 4 | 3 | 1 | 5 |
 
 ### 页面转换清单
-| 页面 | Android 来源 | 状态 | 输出文件 |
+| 页面 | iOS 来源 | 状态 | 输出文件 |
 |------|-------------|------|---------|
-| MainPage | MainActivity | converted | pages/MainPage.ets |
-| HomePage | HomeFragment | converted | pages/HomePage.ets |
+| MainPage | MainScreen | converted | pages/MainPage.ets |
+| HomePage | HomeScreen | converted | pages/HomePage.ets |
 
 ## Stage 2 详情: Feature Base
 
@@ -53,7 +53,7 @@
 
 | Skill | 调用次数 | 被覆盖次数 |
 |-------|---------|-----------|
-| a2h-activity-converter | 12 | 0 |
+| a2h-ios-converter | 12 | 0 |
 | arkts-data-layer | 8 | 0 |
 | arkts-state-manager | 6 | 0 |
 | hmos-builder (agent) | 15 | 0 |

@@ -1,12 +1,11 @@
 ---
 name: hmos-fix-build-errors
-description: Build a HarmonyOS project via CLI and automatically fix compile errors in a loop until the build succeeds. Handles ArkTS V2 errors (@ComponentV2/@Local/@Param/@Event/@Once/@Provider/@Consumer/@Monitor/@Computed/@ObservedV2/@Trace/AppStorageV2/PersistenceV2) as well as legacy V1 (@Component/@State/@Prop/@Link/@Provide/@Consume/@Observed/@ObjectLink/@StorageLink/@StorageProp/@Watch). Default unsigned HAP; pass --signed to build a signed HAP (signing config must already exist in the project's build-profile.json5).
+description: "Build a HarmonyOS project via CLI and automatically fix compile errors in a loop until the build succeeds. Handles ArkTS V2 errors (@ComponentV2/@Local/@Param/@Event/@Once/@Provider/@Consumer/@Monitor/@Computed/@ObservedV2/@Trace/AppStorageV2/PersistenceV2) as well as legacy V1 (@Component/@State/@Prop/@Link/@Provide/@Consume/@Observed/@ObjectLink/@StorageLink/@StorageProp/@Watch). Default unsigned HAP; pass --signed to build a signed HAP (signing config must already exist in the project's build-profile.json5)."
 metadata:
   type: tool
   domain: engineering
 ---
 
-> **Codex subagent dispatch convention.** This skill dispatches subagents. In Codex, spawn them with the `spawn_agent` tool and pass `agent_type` = the role name **exactly as written in this skill** — the roles registered under `.codex/agents/*.toml` use the same hyphenated names, so no translation step is involved: `a2h-activity-converter`, `a2h-android-analyzer`, `a2h-closer`, `a2h-fixer`, `a2h-migration-worker`, `ad-profile-builder`, `compose-fact-analyzer`, `hmos-builder`, `scenario-builder`, `visual-fixer`, `visual-fixer-reviewer`. The built-in `general-purpose` agent_type is unchanged. (Claude's `subagent_type` field is written `agent_type` for Codex; `Agent(...)` dispatch calls are `spawn_agent(...)`; there is no `Task` tool in Codex.)
 >
 > **Join 协议（收口五条款）。** Codex 子代理完成后**不会**唤醒主会话——结果必须由派发方主动收口，违者=静默卡死（实测事故）。
 > ① **循环 wait**：每个 `spawn_agent` 句柄用循环调用 `wait_agent` 收口；单次超时只代表"还在跑"，继续再调；**禁止以"等待子代理"为由结束回合**。醒后必调 `list_agents` 确认是谁完成——**完成的唯一合法信号 = `agent_status` 为 `{"completed": …}`，绝不是产物文件的存在/条数**（文件会中途落盘，读半截=实测事故）；completed 态会在数轮后从 list 中消失，所以每次醒来都要及时查。正文所有"等待完成 / join / 到点即收"表述一律指此循环。
@@ -151,7 +150,7 @@ Env vars must be set inside a `.bat` so they reach the native `node.exe`/`java` 
    ```
    (the `SignHap` step spawns `java` as a child process)
 
-2. **Run the batch file via the PowerShell tool** (foreground or `run_in_background` per the timeout policy below):
+2. **Run the batch file via the PowerShell tool** (foreground or the host’s supported asynchronous command mechanism per the timeout policy below):
    ```powershell
    cmd /c '"<project-dir>\build_temp.bat"'
    ```
@@ -180,7 +179,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
 
 #### Timeout policy
 
-- **First build (cold)**: run in the background (`run_in_background`). Cold start (hvigor init, SDK component load, dependency scan, antivirus scanning on Windows) routinely exceeds 5 minutes. You are notified automatically on completion — do NOT poll in a sleep loop; you may Grep `build_out.log` occasionally for progress.
+- **First build (cold)**: run in the background (the host’s supported asynchronous command mechanism). Cold start (hvigor init, SDK component load, dependency scan, antivirus scanning on Windows) routinely exceeds 5 minutes. You are notified automatically on completion — do NOT poll in a sleep loop; you may Grep `build_out.log` occasionally for progress.
 - **Subsequent builds (incremental, daemon warm)**: foreground with a 600000ms (10 min) timeout.
 
 #### Recovery protocol on timeout / lost result

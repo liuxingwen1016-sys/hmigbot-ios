@@ -1,6 +1,6 @@
 ---
 name: arkts-customer-service
-description: 在 ArkTS / HarmonyOS NEXT 项目中集成或替换三方在线客服 / IM SDK 的落地指南，覆盖网易七鱼（@ysf/sdk）、网易云信 NIM（@nimsdk/*）、腾讯云 IM（@tencentcloud/imsdk）三家鸿蒙原生 SDK。当用户提到"在线客服"、"客服 SDK"、"IM 接入"、"聊天功能"、"消息推送"、"@ysf/sdk"、"@nimsdk"、"@tencentcloud/imsdk"、"unicorn"、"七鱼"、"云信"、"腾讯云 IM"、"TIMSDK"、"V2TIMManager"、"客服替换"、"客服选型"，或者要把 Android 端的 Unicorn / NIM / IMSDK 迁移到鸿蒙时，务必触发此 skill。即使用户只是说"客服功能加一下"、"加个聊天"、"换个客服厂商"、"客服后台连不上"、"客服消息收不到"，也应触发——因为客服赛道在鸿蒙原生上选项少且踩坑多，盲选会浪费工期。
+description: "在 ArkTS / HarmonyOS NEXT 项目中集成或替换三方在线客服 / IM SDK 的落地指南，覆盖网易七鱼（@ysf/sdk）、网易云信 NIM（@nimsdk/*）、腾讯云 IM（@tencentcloud/imsdk）三家鸿蒙原生 SDK。当用户提到\"在线客服\"、\"客服 SDK\"、\"IM 接入\"、\"聊天功能\"、\"消息推送\"、\"@ysf/sdk\"、\"@nimsdk\"、\"@tencentcloud/imsdk\"、\"unicorn\"、\"七鱼\"、\"云信\"、\"腾讯云 IM\"、\"TIMSDK\"、\"V2TIMManager\"、\"客服替换\"、\"客服选型\"，或者要把 iOS 端的 Unicorn / NIM / IMSDK 迁移到鸿蒙时，务必触发此 skill。即使用户只是说\"客服功能加一下\"、\"加个聊天\"、\"换个客服厂商\"、\"客服后台连不上\"、\"客服消息收不到\"，也应触发——因为客服赛道在鸿蒙原生上选项少且踩坑多，盲选会浪费工期。"
 metadata:
   type: domain
   domain: system
@@ -22,7 +22,7 @@ metadata:
 
 - **网易七鱼 `@ysf/sdk`** — 客服业务 SDK，自带聊天 UI，业务接入 init / openChat / logout 三个方法即可
 - **网易云信 NIM `@nimsdk/*`** — 通用 IM 通道，10+ 个 har 模块按需组合，UI 完全自造
-- **腾讯云 IM `@tencentcloud/imsdk`** — 通用 IM 通道，单包 ohpm 安装，V2TIM 系列 API 与 Android/iOS 高度对齐，UI 完全自造
+- **腾讯云 IM `@tencentcloud/imsdk`** — 通用 IM 通道，单包 ohpm 安装，V2TIM 系列 API 与 iOS/鸿蒙 高度对齐，UI 完全自造
 
 每家详细的安装、配置项、API、踩坑放在对应的 reference 文件，这里只负责**确定走哪家**和**列出三家共性接入步骤**。
 
@@ -42,7 +42,6 @@ metadata:
 
 ### 优先级 2：从用户给出的参考源码 / 配置识别厂商
 
-用户给了 Android 项目源码、`build.gradle`、`oh-package.json5` 或文档片段时，先识别已有依赖：
 
 | 识别到的依赖 / 类名 | 对应 reference |
 |---|---|
@@ -62,7 +61,7 @@ metadata:
 > 2. **网易云信 NIM `@nimsdk/*`** —— 通用 IM 通道，UI 自造
 > 3. **腾讯云 IM `@tencentcloud/imsdk`** —— 通用 IM 通道，UI 自造
 >
-> 你计划用哪家？或者已经在 Android 端用过哪家、希望延续？
+> 你计划用哪家？或者已经在 iOS 端用过哪家、希望延续？
 
 不要在用户回答前自行决策。如果用户回复"你看着办" / "都行" / "随便"，再把下面三家速查表给他看让他敲定。
 
@@ -76,7 +75,7 @@ metadata:
 | 安装方式 | `ohpm i @ysf/sdk` | har 包本地引入（部分模块支持远程 ohpm）| `ohpm i @tencentcloud/imsdk` |
 | API 风格 | configXxx + open(uiContext) | nim.xxxService.method() + on(event) | V2TIMManager.getXxxManager().method(args) |
 | 异步风格 | 同步 + on() 回调 | Promise + on() 事件 | Promise + addListener |
-| 跨端一致性 | 与 Android Unicorn API 不一致（HOS 重写） | 与 V2NIM API 高度一致 | 与 V2TIM API 完全一致 |
+| 跨端一致性 | 与 iOS Unicorn API 不一致（HOS 重写） | 与 V2NIM API 高度一致 | 与 V2TIM API 完全一致 |
 | 客服业务（机器人/转人工/留言/工单） | ✅ 内建 | ❌ 自实现 | ❌ 自实现 |
 | 离线推送 | 内建（onUnread 事件） | `pushServiceConfig.harmonyCertificateName` | 单独包 `@tencentcloud/timpush` |
 | 必需权限 | INTERNET / GET_NETWORK_INFO | INTERNET / GET_NETWORK_INFO | INTERNET / GET_NETWORK_INFO |
@@ -154,7 +153,7 @@ SomeSdk.logout();   // 七鱼:QiyuService.logout / 云信:nim.loginService.logou
 | "腾讯云 IM 鸿蒙怎么发图片消息？" | `references/tencent-im.md` |
 | "@nimsdk 这一堆模块到底要哪几个？" | `references/yunxin-nim.md` |
 | "云信 / 腾讯 IM 的初始化都有哪些配置项？" | 对应 reference 的"配置项详解"章节 |
-| "客服 SDK 和 Android 端能不能打通？" | 对应 reference 的"跨端一致性"章节 |
+| "客服 SDK 和 iOS 端能不能打通？" | 对应 reference 的"跨端一致性"章节 |
 | "客服页底部被手势条压住了" | 对应 reference 的"沉浸式适配"章节 |
 
 ## 下一步动作建议

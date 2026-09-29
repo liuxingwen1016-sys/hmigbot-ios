@@ -12,8 +12,8 @@
 
 | 检查条件 | 覆盖规则 | 原因 |
 |---------|---------|------|
-| Stage 1 页面转换 | 使用 `a2h-activity-converter` agent | converter agent 专门为页面级 UI 转换设计 |
-| Stage 3 Step 3a 页面未转换且有 Android 源码 | 先触发 Phase A 按需数据准备，再调 converter | 必须有数据才能转换 |
+| Stage 1 页面转换 | 使用 `a2h-ios-converter` agent | converter agent 专门为页面级 UI 转换设计 |
+| Stage 3 Step 3a 页面未转换且有 iOS 源码 | 先触发 Phase A 按需数据准备，再调 converter | 必须有数据才能转换 |
 | 上一个编译检查点 FAILED | 暂停执行，报告错误列表 | 阻断性检查点不继续后续 task |
 | task 使用了不确定的 API | 追加 `arkts-knowledge-verifier` | 防止使用错误/废弃的 API |
 | task 内容命中 a2h-plan `references/skill-binding-rules.md` 映射表关键词（动画/视频/媒体/下载/权限等）但 plan 未标 | 按该表追加对应 Domain Skill——**plan 漏标兜底，非第二映射源**（具体映射零复制，查表为准）；兜底触发即在迁移报告覆盖记录表标「plan 漏标：该 slice 文件 `suggested_skills+:` 应补」 | 主路径 = plan 期落字段；runtime 只兜漏网 |
@@ -31,7 +31,7 @@
   2. 找到匹配的风格 skills → 追加到 subagent 的 skills 列表
   3. style_set 值在 skills 目录中找不到对应 skills → 发出 WARN 日志，回退到 `none`（不阻断执行）
 
-风格 skills 对 `a2h-activity-converter`（Stage 1）和 `a2h-migration-worker`（Stage 2/3）均生效。注入时追加在 suggested_skills 之后。
+风格 skills 对 `a2h-ios-converter`（Stage 1）和 `a2h-migration-worker`（Stage 2/3）均生效。注入时追加在 suggested_skills 之后。
 
 ## 3. 覆盖原则
 

@@ -73,7 +73,7 @@ Page Object 内按以下优先级声明 locator；证据可以来自被测应用
 
 若某个必需操作或 landmark 既无可复用 stable ID，也无可唯一定位的可见文本/合法关系语义 locator，则不要生成猜测式 locator 或可执行 flow：
 
-- Android 源码确认要求且构成到页路径的入口、edge action、handler、route 或目标 landmark 根本未实现：`ENTRY_GAP` 导航根 `RED/IMPL_MISSING`。
+- iOS 源码确认要求且构成到页路径的入口、edge action、handler、route 或目标 landmark 根本未实现：`ENTRY_GAP` 导航根 `RED/IMPL_MISSING`。
 - 已到达目标 landmark，但构造用例必需的页内业务 trigger/action/control 完全不存在：该功能点记 `IMPL_MISSING_STATIC` 并合成 `RED/IMPL_MISSING`；不生成导航根或下游 `BLOCKED_BY_NAVIGATION`。若 action/control 可执行且 expected matcher 可由 Spec/资源/UI 契约表达，即使当前结果完全未呈现也必须生成测试并真实运行。
 - 存在真实页面/路径，但必需操作或 landmark 无法用上述规则唯一定位，或需求本身没有公开 UI 路径/观察面：只写一份页面级 `ERROR/UNREACHABLE_BY_UI`，移出 runnable UI inventory，转 UT/集成或人工验证。不生成 flow/test，也不生成下游 `BLOCKED_BY_NAVIGATION`。
 
@@ -291,7 +291,7 @@ runner 必须把业务观察和 hook/清理观察分别归档后确定该 ID 的
 
 允许的结果包括：目标组件出现/消失、可见文本、enabled/checked/selected 状态、列表可见项、Dialog/Menu/Sheet、通过生产导航到达的页面以及系统可见反馈。
 
-禁止把 `AppStorage.get()`、`@State`、ViewModel 字段、数据库行、导航栈内容或“driver 不为 null”当 UI 功能验收。只有真实业务 action/control 可执行且预期 matcher 能由现有 UI 契约表达时，才按 Android 源码证实的预期断言可见结果，让错误或缺失结果自然 RED。若目标 page/surface landmark 可达，但完成该功能所必需的业务 action/control 经源码与控件树确认完全不存在，则保留原稳定功能 ID 为 `IMPL_MISSING_STATIC`，不生成伪 action 或不可执行测试；由 reconcile 合成 `RED/IMPL_MISSING`、`test_file=null`、`business_assertions_run=false`。两种情形都不得写注定通过的替代断言。
+禁止把 `AppStorage.get()`、`@State`、ViewModel 字段、数据库行、导航栈内容或“driver 不为 null”当 UI 功能验收。只有真实业务 action/control 可执行且预期 matcher 能由现有 UI 契约表达时，才按 iOS 源码证实的预期断言可见结果，让错误或缺失结果自然 RED。若目标 page/surface landmark 可达，但完成该功能所必需的业务 action/control 经源码与控件树确认完全不存在，则保留原稳定功能 ID 为 `IMPL_MISSING_STATIC`，不生成伪 action 或不可执行测试；由 reconcile 合成 `RED/IMPL_MISSING`、`test_file=null`、`business_assertions_run=false`。两种情形都不得写注定通过的替代断言。
 
 持久化功能采用黑盒复核：
 
@@ -312,7 +312,7 @@ runner 必须把业务观察和 hook/清理观察分别归档后确定该 ID 的
 | `SYSTEM_ENTRY` | 通过被测应用或系统宿主中的真实可见按钮、通知、分享项触发。在 `ui/navigation/to_<target_short>/` 中复现 `start_context` 并生成同 ID preflight，记录设备前置与目标 surface 的唯一可见 landmark |
 | `DEEPLINK_ENTRY` | 点击真实页面上产品公开的可见链接组件；在 `ui/navigation/to_<target_short>/` 中生成 flow/preflight，不得直接启动 URI/Want 代替点击 |
 | `CROSS_APP_ENTRY` | 通过另一应用中的真实可见操作触发；在 `ui/navigation/to_<target_short>/` 中生成 flow/preflight 并记录两端入口与环境前置 |
-| `ENTRY_GAP` | Android 源码确认要求生产入口但产品未实现；不生成 flow/test，登记 `RED/IMPL_MISSING` 导航根 |
+| `ENTRY_GAP` | iOS 源码确认要求生产入口但产品未实现；不生成 flow/test，登记 `RED/IMPL_MISSING` 导航根 |
 | `UNREACHABLE_BY_UI` | 没有应用内点击路径/可验证的生产外部入口/UI 观察面，或必需操作/landmark 无合法唯一语义 locator；只写 `ERROR/UNREACHABLE_BY_UI`，移出 runnable UI inventory，不生成 flow/test 或 blocked 记录 |
 
 `SYSTEM_ENTRY`/`DEEPLINK_ENTRY`/`CROSS_APP_ENTRY` 必须有 `module.json5`/skills 配置、跨应用产品链路或产品文档证据，但不是组件点击规则的例外。内部页面名、router URL、NavPathStack route 不是“生产深链”；即使 URI 已公开，也不能用 shell/Want/接口直达目标替代真实链接点击。只能正常启动应用/宿主默认入口建立起点。

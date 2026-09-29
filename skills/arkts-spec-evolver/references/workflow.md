@@ -76,7 +76,7 @@ done
 **3.5.4 派生 affected_visual_pages**
 - 仅当 `affects` 含 `ui:` 时必填
 - 列出本次改动触碰的页面的所有关键状态（空状态、有数据状态、管理模式等）
-- 每条包含：page_id、state_label、hmos_entry_path、android_reference、android_entry_path
+- 每条包含：page_id、state_label、hmos_entry_path、source_reference、iOS_entry_path
 - 记入 `### affected_visual_pages`
 
 **3.5.5 填写 rationale**
@@ -301,12 +301,10 @@ Step 10.5 通过后、执行 Step 11 前，必须向用户展示最终回归清�
 |---|---|---|
 | (A) 视觉验证通过 | arkts-visual-verify 的返回报告 + 截图路径 | 设备齐全且 UI 对比通过 |
 | (B) 视觉验证失败但已达 max_rounds | arkts-visual-verify 的终态报告 | 进回退处理（Step 12），**不得**升级 done |
-| (C) 无可用设备 | `hdc list targets`（或 `adb devices`）**命令原文 + 实际 stdout**（空设备列表需可见） | 回退 `verifying(visual-pending)`，**不得**升级 done |
 
 **硬性要求**：
 - 缺上述三项任一 → 视为跳过 Step 11 → skill 失败
 - 仅凭"跑过了"的陈述不作数；必须有**可见的命令输出 / 子 skill 返回块**在对话里
-- `hdc list targets` / `adb devices` 命令本身必须在 execute 阶段结束后、设置 status 前**单独执行一次**，不能复用前面步骤的输出（设备状态随时变化）
 
 **状态升级守则**：
 - status: `verifying` → `done` 只在 (A) 成立时允许
@@ -385,45 +383,8 @@ IF sample_acs 中任一 AC 退化:
 
 IF preexisting RED（baseline 上即飘红）:
   → 不计入退化，但在报告中标注 "preexisting RED, not regression"
-```
-
-**11a.5 漏报模式知识库的双向闭环**
-
-- **写入端**（本节 11a.4）：每次 sample 抓到漏报时自动追加
-- **读取端**（a2h-incremental-migration §M3.2.5.4.5）：每次新 spec 派生时 LLM 必读该文件作为上下文
-- **结果**：第一次跑可能漏 5 个，第二次漏 3 个，第十次漏 0 个——机制在使用中越用越准，零人工调优
-
-> 类比：自动驾驶系统的 corner case 学习机制，遇到一次特殊场景就把它收录，下次遇到不再翻车。
-
-**11a.4 explosion=true 时的特殊路径**
-
-- 仅回归 spec 里 `feature_acs` 实际列出的"手挑关键 AC"
-- 全量派生结果（spec 中 `全量派生结果` 节）仅审计用，不传给 dt-verifier
-- 在验证记录里显式标注 "explosion=true，非全量回归，已 opt_out"
-
----
-
-**Step 11b：视觉验证（新增功能对齐 + baseline_screenshots diff）**
-
-仅当 `affects` 含 `ui:` 时执行。Step 11a 通过（或不需跑）后才进入。
-
-**11b.1 设备探测（最先执行，不得跳过）**
-
-<HARD-GATE>
-进入 Step 11b 的第一个动作必须是设备探测。在探测完成前，禁止执行任何截图、对比、或视觉判定操作。
-</HARD-GATE>
-
-必须执行并在对话里显示：
-
-```bash
-# HMOS 端
-hdc list targets
-# Android 端（如 spec 涉及对比）
-adb devices
-```
 
 - 两个命令**都必须跑**，stdout 以 code fence 贴回对话
-- `hdc not found` / `adb not found` 也要显式展示 → 视同无设备
 - 有至少一端设备可用 → 继续 11b.2
 - 两端都无设备 → 回填 `verifying(visual-pending)`，**不**升级 `done`，在"验证记录"里贴上两条命令的实际输出作为证据，**终止 Step 11b**
 
@@ -445,12 +406,12 @@ adb devices
 <HARD-GATE>
 视觉验证**必须**通过调用 `arkts-visual-verify` skill 执行。绝对禁止以下替代行为：
 - ❌ 自己截图 + 肉眼看一下就判定通过
-- ❌ 只截 HMOS 端不截 Android 端就判定无差异
+- ❌ 只截 HMOS 端不截 iOS 端就判定无差异
 - ❌ 只看一个状态就判定整个页面通过（必须覆盖 affected_visual_pages 的所有状态）
 - ❌ 用"截图看起来正常"替代 skill 的结构化对比报告
 
 原因：手动截图对比缺乏结构化记录、容易遗漏状态、无法追溯判定依据。arkts-visual-verify 提供：
-1. 自动化的跨端截图采集（HMOS + Android）
+1. 自动化的跨端截图采集（HMOS + iOS）
 2. 多模态对比 + 叠加语义判定
 3. 自动修复循环（截图→对比→修代码→重启，最多 max_rounds 轮）
 4. 结构化报告（每条状态的判定结果 + 截图路径 + diff 描述）
@@ -469,7 +430,6 @@ adb devices
       hmos_entry: entry/src/main/ets/pages/MainPage.ets
       sub_component: ItemsView                 # 可选，子 struct 精确定位
       entry_path: 冷启 → 底 Tab "我的作品" → 切 "我创建的"
-      android_reference: {android_dir}/app/src/main/res/layout/fragment_work.xml
       acceptance_visual:                       # 从 spec "验收标准" 中挑视觉可判项
         - "右下 FAB 可见，圆角 + 渐变"
         - "管理模式下 FAB 消失"
@@ -486,27 +446,27 @@ adb devices
 
 **11b.4 跨端对照判定（由 arkts-visual-verify 执行，此处定义判定规则）**
 
-视觉真值是同期 Android 应用，**不做** "HMOS 改前 baseline 截图"——一来 HMOS 改造已有页面会误判（新增元素被当作回归），二来要求在改代码前截图增加流程负担。
+视觉真值是同期 iOS 应用，**不做** "HMOS 改前 baseline 截图"——一来 HMOS 改造已有页面会误判（新增元素被当作回归），二来要求在改代码前截图增加流程负担。
 
 arkts-visual-verify 对 `affected_visual_pages` 每条状态执行：
 
 ```
 1. HMOS 走 hmos_entry_path → 截图（after）
-2. Android 走 android_entry_path → 截图（reference）
+2. iOS 走 iOS_entry_path → 截图（reference）
 3. 多模态对比，按"叠加语义"判定：
-   - reference（Android）有的 UI 元素，HMOS 必须存在 + 位置/样式不变（允许像素级微差）
+   - reference（iOS）有的 UI 元素，HMOS 必须存在 + 位置/样式不变（允许像素级微差）
    - HMOS 新增元素允许（属于本次新增功能或 HMOS 设计决策）
    - 已有元素消失 / 位移 / 变形 → 失败
 ```
 
 **关键判定原则**：
 - 视觉对照的目的是"已有功能没坏"，**不是**追求两端像素一致。HMOS 在保留已有元素的前提下做样式适配（如 NavDestination 标题栏样式）允许。
-- 当 HMOS 新增元素与 Android 引用图差异巨大（如新增大块区域），多模态可能误判为"位移变形"。此时使用 spec 中 `## 验收标准` 的视觉条目作为补充判定依据：明确属于本次新增的不计入失败。
+- 当 HMOS 新增元素与 iOS 引用图差异巨大（如新增大块区域），多模态可能误判为"位移变形"。此时使用 spec 中 `## 验收标准` 的视觉条目作为补充判定依据：明确属于本次新增的不计入失败。
 - 任意一条状态出现"已有元素消失/位移/变形"且无法被验收标准合理解释 → 进 Step 12 回退处理；不得升级 done。
 
-**Android 端不可达时的降级**：
-- Android 模拟器未连 / 同状态未实现 → 该条标 `unreachable_reference`，仅做新增功能视觉对齐（11b.2-11b.3），不做对照
-- 全部状态都不可达 → spec status 标 `verifying(visual-pending)`，等 Android 端就绪再补
+**iOS 端不可达时的降级**：
+- iOS 模拟器未连 / 同状态未实现 → 该条标 `unreachable_reference`，仅做新增功能视觉对齐（11b.2-11b.3），不做对照
+- 全部状态都不可达 → spec status 标 `verifying(visual-pending)`，等 iOS 端就绪再补
 
 **11b.5 结果回写**
 

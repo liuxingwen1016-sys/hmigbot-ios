@@ -67,7 +67,7 @@ router.pushUrl 跳转 + Hero + 滚动 + BottomBar 的组合，是 layout 陷阱�
 
 - **Scroll 不要同时设 `.height('100%')` + `.layoutWeight(1)`** — 删掉 `.height('100%')`，否则 ArkUI 切换 layout 路径，间接触发 NavDestination 自动让位 safeArea → 顶部出现 ≈windowTopPadding 高的微小白边。
 - **HeroSection 内 Stack height + 子 Column height + 子 Image height 三者必须用同一个具体数值**（如 `276/276/276` 或 `500/500/500`），**不能混用 `'100%'` 相对值**。
-- **Hero 不补偿 windowTopPadding**：用 Android 原始设计稿数值固定（如 276vp / 500vp），让 Hero 自然铺到屏幕物理顶 y=0，状态栏文字浮在图片上。
+- **Hero 不补偿 windowTopPadding**：用 iOS 原始设计稿数值固定（如 276vp / 500vp），让 Hero 自然铺到屏幕物理顶 y=0，状态栏文字浮在图片上。
 - **不要把 BottomBar 当作 Stack 的并列 child + `.align(Bottom)` 浮层**：用经典 Column wrapper 上下分段（Scroll layoutWeight(1) + BottomBar 固定 height），Stack 只留一个 height 100% child。
 
 ---

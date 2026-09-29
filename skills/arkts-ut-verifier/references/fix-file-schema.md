@@ -28,7 +28,7 @@ spec/verify/ut/
 **核心不变性**：
 
 - 文件存在 ⇔ 本轮该问题为 `RED/ERROR/IMPL_MISSING/UNREACHABLE`；方法 UT 的原始 GREEN 不会消除仍存在的接线问题，缺结果/缺依据且无法定 kind 的项另列未验证清单
-- 旧 round 问题文件保留，不能删除文件或改写原始运行证据制造已解决。主线程可按当前源码和 Android 证据复核上一轮供派单文件，修正已失效的 kind/disposition 及分类依据后重派；fixer 不直接改问题文件，跨轮状态仍按稳定 ID 与本轮独立验证推导
+- 旧 round 问题文件保留，不能删除文件或改写原始运行证据制造已解决。主线程可按当前源码和 iOS 证据复核上一轮供派单文件，修正已失效的 kind/disposition 及分类依据后重派；fixer 不直接改问题文件，跨轮状态仍按稳定 ID 与本轮独立验证推导
 - 同一问题跨轮的身份靠 **id**（文件名 = id + `.md`，1:1 互查）
 
 ## 二、文件名 = ID（确定性，跨轮稳定）
@@ -82,7 +82,7 @@ disposition_set_at_round: null      # 整数，绝对轮次号
 | `severity` | enum | 从 spec priority 继承（P0/P1/P2） |
 | `suggested_files` | list[string] | ≥ 1 条；fixer 用来定位，但不必盲信（fixer 自做诊断） |
 | `related` | list[string] | 手工标注；fixer 不据此聚类 |
-| `evidence` | list[string] | ≥ 1 条；日志/dump 或源码路径带行号。生产接线缺口须列真实调用位置与 Android 行为依据，方法 UT 已通过时保留原始日志，不伪造运行失败 |
+| `evidence` | list[string] | ≥ 1 条；日志/dump 或源码路径带行号。生产接线缺口须列真实调用位置与 iOS 行为依据，方法 UT 已通过时保留原始日志，不伪造运行失败 |
 | `disposition` | null \| enum | fix-loop 跨轮决策，见 §五 |
 | `disposition_reason` | null \| string | disposition 非 null 时必填 |
 | `disposition_set_at_round` | null \| int | disposition 非 null 时必填 |
@@ -93,7 +93,7 @@ disposition_set_at_round: null      # 整数，绝对轮次号
 |---|---|---|
 | `RED` | 测试运行后断言失败 | ✅ 处理 |
 | `ERROR` | 测试运行时报错（init 失败 / timeout / 编译跳过等） | 先区分根因；业务缺陷修生产代码，测试缺陷由获授权的 fixer 或测试阶段修测试，禁止生产兜底凑绿 |
-| `IMPL_MISSING` | 范围内 Android 行为及批准差异已有证据，当前 ArkTS 缺少等价功能入口或必要生产接线 | ✅ fixer 按 Android 行为补齐能力、实际调用与结果消费，按需新增/更新测试；不能仅因缺 Spec 建议类名新增实现，见 `fixer-test-policy.md` 和 `fixer-wiring-policy.md` |
+| `IMPL_MISSING` | 范围内 iOS 行为及批准差异已有证据，当前 ArkTS 缺少等价功能入口或必要生产接线 | ✅ fixer 按 iOS 行为补齐能力、实际调用与结果消费，按需新增/更新测试；不能仅因缺 Spec 建议类名新增实现，见 `fixer-test-policy.md` 和 `fixer-wiring-policy.md` |
 | `UNREACHABLE` | 本验证范围内无可执行入口/可观测结果，已排除前置条件和测试接线问题 | ❌ 不进入本轮自动修复；不计入分母，保留原因和未验证范围 |
 
 ## 五、`disposition` 跨轮决策
@@ -155,7 +155,7 @@ if exists(prev_path):
 | Section | 必填 | 长度上限 | 写法约束 |
 |---|---|---|---|
 | 1. Spec 引用 | ✅ | ≤ 5 行块引用 | **原文直引**，不得意译；末尾标 `来源:` 路径 |
-| 2. 期望 | ✅ | ≤ 8 行 | 描述行为并附 Android 路径/符号/行号或已核验 oracle、批准差异引用；fixer 必须回读证据，不以描述代替源码 |
+| 2. 期望 | ✅ | ≤ 8 行 | 描述行为并附 iOS 路径/符号/行号或已核验 oracle、批准差异引用；fixer 必须回读证据，不以描述代替源码 |
 | 3. 实际 | ✅ | ≤ 8 行 | 已执行项引日志原文首行（≤ 160 字）；方法 GREEN 但必要接线仍缺时同时列源码缺口。未生成/未执行项写“未执行”并引用 generation 与当前源码/环境复核证据，不伪造失败日志 |
 | 4. 源码缺口 | ✅ | 每行一条 | ≥ 1 条 `<file>:<line>`；行号未知写 `unknown` |
 | 5. 修复建议 | ✅ | 步骤化 | ≥ 1 步；每步动词开头。**fixer 当 hypothesis，会自行 grep 验证**，不当金科玉律 |

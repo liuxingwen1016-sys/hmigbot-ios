@@ -1,6 +1,6 @@
 # 分享面板 ShareKit
 
-> 使用 `@kit.ShareKit` 拉起系统分享面板，替代 Android 的 `Intent.ACTION_SEND`。
+> 使用 `@kit.ShareKit` 拉起系统分享面板，替代 iOS UIActivityViewController 的分享意图（逐项核验内容类型和回调）。
 
 ---
 

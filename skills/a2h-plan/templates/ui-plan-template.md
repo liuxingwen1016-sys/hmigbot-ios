@@ -11,7 +11,6 @@ body 只留分批规则（批内页数无上限，批 = 优先级的自然分组
 
 **size-1 Batch 禁止**：孤页批并入**前一批**末尾，行内保留其原优先级标注（此并批不视为违反优先级单调性；§7 校验 size-1 批 = 0）。
 
-**confidence 同为分批输入**（读 ui-manifest，high 在前）：**不输出 confidence 列**；仅 `low` 页在行内标 `⚠️low`（需人工补充 UIAutomator dump 数据，异常才显性）。
 
 **结算检查点**：每 Batch 末尾注入一个（批收尾结算：资源 sweep + brief，**无编译**；统一编译在 a2h-execute §3d 收口）。
 
@@ -26,21 +25,21 @@ body 只留分批规则（批内页数无上限，批 = 优先级的自然分组
 
 ## Batch 1: P0 Core Pages
 
-| 序号 | 页面 | Android 来源 | owning_slice |
+| 序号 | 页面 | iOS 来源 | owning_slice |
 |------|------|-------------|--------------|
-| 0001 | MainPage | MainActivity | F001 |
-| 0002 | HomePage | HomeFragment | F002 |
-| 0003 | QueuePage | QueueFragment | F003 |
+| 0001 | MainPage | MainScreen | F001 |
+| 0002 | HomePage | HomeScreen | F002 |
+| 0003 | QueuePage | QueueScreen | F003 |
 
 结算检查点: Batch 1 完成后（batch closer 结算 → brief，见 a2h-execute §3b）
 
 ## Batch 2: P0 Player + Subscription
 
-| 序号 | 页面 | Android 来源 | owning_slice |
+| 序号 | 页面 | iOS 来源 | owning_slice |
 |------|------|-------------|--------------|
-| 0004 | PlayerPage | PlayerActivity | F004 |
-| 0005 | SubscriptionPage | SubscriptionFragment | F005 |
-| 0006 | SearchPage | SearchFragment | F006 |
+| 0004 | PlayerPage | PlayerScreen | F004 |
+| 0005 | SubscriptionPage | SubscriptionScreen | F005 |
+| 0006 | SearchPage | SearchScreen | F006 |
 
 结算检查点: Batch 2 完成后（同上）
 
@@ -48,9 +47,9 @@ body 只留分批规则（批内页数无上限，批 = 优先级的自然分组
 ...
 
 ## Batch N: P2 Low Priority
-| 序号 | 页面 | Android 来源 | owning_slice |
+| 序号 | 页面 | iOS 来源 | owning_slice |
 |------|------|-------------|--------------|
-| 00XX | AboutPage ⚠️low | AboutActivity | F0NN |
+| 00XX | AboutPage ⚠️low | AboutScreen | F0NN |
 
 `owning_slice` 列填**裸 F-ID**（如 `F001`），从 `feature-index.md` 的 feature→涉及页面 映射推导。**必须是裸 F-ID 而非「Slice N」**（`^F\d{3}$` 契约；Slice↔F-ID 1:1，编号见 feature-plan 索引）。converter 据此 + §7 接线归属映射，为 forward-ref 钩子算 `resolve_by`。
 

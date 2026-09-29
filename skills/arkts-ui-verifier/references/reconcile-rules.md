@@ -491,13 +491,13 @@ emit_shared_infra(remaining, missing_result_phase, missing_result_evidence)
 - 导航首因只由 `navigation_case` 文件表达。下游页面功能与 journey 不运行功能操作，不写 FUNCTION 断言失败。
 - 前期 preflight GREEN 只进入前期门票；最终 PAGE_ENTRY/RECOVERY 观察独立聚合为原 flow ID 的本包诊断。最终到页失败停止新业务：已完成结果保留，直接 dependents blocked，其余有明确停止证据的未开始业务/页面准入为 DEFERRED/NAVIGATION_GATE；不得混入前期 GREEN 或伪造独立 preflight 执行。
 - 每个可执行页面的 `navigation_case` 等于 canonical flow ID，也等于其 preflight `it()` ID。多跳失败仍以 flow ID 写根文件，具体 edge 只写入 `failed_step`。
-- `ENTRY_GAP` 没有可执行 preflight：基于本轮Android 行为与鸿蒙静态源码证据先合成 `RED/IMPL_MISSING` root outcome（含默认/派生完整字段），再由 writer 写 `test_file: null` 根文件；随后使用 planned inventory 的稳定 function/journey ID 合成 `test_file: null` blocked outcome 与文件。不能从不存在的测试文件反推 ID。这不阻止其他页面完成设计/生成或导航诊断，但会关闭全局功能准入门。
+- `ENTRY_GAP` 没有可执行 preflight：基于本轮iOS 行为与鸿蒙静态源码证据先合成 `RED/IMPL_MISSING` root outcome（含默认/派生完整字段），再由 writer 写 `test_file: null` 根文件；随后使用 planned inventory 的稳定 function/journey ID 合成 `test_file: null` blocked outcome 与文件。不能从不存在的测试文件反推 ID。这不阻止其他页面完成设计/生成或导航诊断，但会关闭全局功能准入门。
 - `IMPL_MISSING_STATIC` 没有测试文件：基于目标页已可达、但构造用例必需的业务 trigger/action/control 完全不存在的静态证据，生成自身 `RED/IMPL_MISSING` outcome/问题文件；`blocked_by=null`，不影响同页其他可运行功能。
 - `UNREACHABLE_BY_UI` 包括“无公开 UI 路径/观察面”和“任一必需操作或 landmark 无产品已有稳定唯一 ID、唯一可见文本或合法关系语义 locator”。只写一份 `ERROR/UNREACHABLE_BY_UI` 页面级记录并转 UT/集成或人工验证，其需求不进入 runnable UI inventory；不生成 flow/test，也不生成下游 `BLOCKED_BY_NAVIGATION`。
 - `blocked_by` 必须指向本轮存在的根问题文件。对 `ENTRY_GAP`，root outcome/根文件 `affected_test_ids`、planned inventory 中该 `navigation_case` 下的 `ENTRY_GAP` function/journey ID、case inventory 的 `ENTRY_GAP_BLOCKED` ID，以及 blocked outcome/文件按 `blocked_by` 的反向扫描结果必须全部一致；其他导航根至少保证 root outcome、根文件与反向扫描一致。
 - 如果控件树/截图证明产品页面和入口正确，产品已有 stable ID 或可唯一定位的可见文本，而 navigation helper 使用了错误 locator、错误作用域或错误等待，根文件是 `ERROR + SETUP`，不得改产品。
 - 如果产品有对应真实页面/组件，但必需操作或 landmark 无合法唯一语义 locator，走前述 `ERROR/UNREACHABLE_BY_UI` 前置分支，不得进入 navigation root 分类或派生 blocked 文件。不得注入 ID、生成 ID manifest、坐标硬点或修改生产组件来绕过。
-- 如果 Android 源码确认要求且构成到页路径的真实入口、edge action、handler、route 或目标 landmark 根本未实现，导航根文件是 `RED + IMPL_MISSING`。若目标 landmark 已到达但构造功能用例必需的页内业务 trigger/action/control 完全不存在，则只写该功能点 `RED + IMPL_MISSING`，不派生导航 blocked。若 action/control 可执行且 expected matcher 可表达，只是结果错误或完全未呈现，则保持 `RUNNABLE` 并由真实执行形成 `RED + FUNCTION`。如果合法 selector 存在、测试已正确操作真实组件，但 onClick、生产路由/参数或目标 landmark 仍失败，导航根文件是 `RED + NAVIGATION`。
+- 如果 iOS 源码确认要求且构成到页路径的真实入口、edge action、handler、route 或目标 landmark 根本未实现，导航根文件是 `RED + IMPL_MISSING`。若目标 landmark 已到达但构造功能用例必需的页内业务 trigger/action/control 完全不存在，则只写该功能点 `RED + IMPL_MISSING`，不派生导航 blocked。若 action/control 可执行且 expected matcher 可表达，只是结果错误或完全未呈现，则保持 `RUNNABLE` 并由真实执行形成 `RED + FUNCTION`。如果合法 selector 存在、测试已正确操作真实组件，但 onClick、生产路由/参数或目标 landmark 仍失败，导航根文件是 `RED + NAVIGATION`。
 - journey 的 canonical 前置失败时按其 `navigation_case` blocked；前置通过后 journey 自身操作/跨页结果失败归 journey ID 的 `RED/FUNCTION`。不能把 journey 失败改写成 owner 页面中的另一个功能 ID。
 - 不允许在测试中直达、直接挂载目标页，也不允许给产品增加隐藏入口或测试专用路径。
 - 导航恢复后的下一轮必须真实执行所有受影响功能用例。它们不能因为 blocked 文件消失就自动记 fixed。

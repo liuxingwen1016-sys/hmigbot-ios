@@ -1,6 +1,6 @@
 ---
 name: arkts-truncation-fix
-description: 修复 ArkTS/HarmonyOS 应用中 UI 内容截断、布局溢出、多设备适配不良等问题（V2 优先，API 12+）。当用户提到"内容显示不全""布局溢出""折叠屏布局异常""图片被裁切""AlphabetIndexer 溢出""列表显示不全""多设备/响应式/断点适配""hover 模式失败"等，或只说"界面显示有问题""这个页面有 bug"（截断/响应式/折叠屏方向）时触发。**沉浸式 / 安全区 / 状态栏遮挡 / setWindowLayoutFullScreen → [arkts-immersive-safearea](../arkts-immersive-safearea/SKILL.md)。** **纯文本字符级截断（Ellipsis 位置 / maxLines 不生效 / Flex 内 Text 被挤没 / 弹窗超屏 / RichEditor / TextInput）→ [arkts-text-truncation](../arkts-text-truncation/SKILL.md)。**
+description: "修复 ArkTS/HarmonyOS 应用中 UI 内容截断、布局溢出、多设备适配不良等问题（V2 优先，API 12+）。当用户提到\"内容显示不全\"\"布局溢出\"\"折叠屏布局异常\"\"图片被裁切\"\"AlphabetIndexer 溢出\"\"列表显示不全\"\"多设备/响应式/断点适配\"\"hover 模式失败\"等，或只说\"界面显示有问题\"\"这个页面有 bug\"（截断/响应式/折叠屏方向）时触发。**沉浸式 / 安全区 / 状态栏遮挡 / setWindowLayoutFullScreen → arkts-immersive-safearea。** **纯文本字符级截断（Ellipsis 位置 / maxLines 不生效 / Flex 内 Text 被挤没 / 弹窗超屏 / RichEditor / TextInput）→ arkts-text-truncation。**"
 metadata:
   type: domain
   domain: ui
@@ -343,7 +343,7 @@ Text(messageContent)
 - **arkts-component-builder**：如果修复需要创建新的自定义组件
 - **arkts-knowledge-verifier**：不确定某个 API 是否存在或版本兼容性时
 - **arkts-codebase-debug**：如果是运行时行为异常而非布局截断问题
-- **arkts-ui-alignment**：如果涉及 Android UI 迁移到 ArkTS 的对齐
+- **arkts-ui-alignment**：如果涉及 iOS UI 迁移到 ArkTS 的对齐
 
 ---
 

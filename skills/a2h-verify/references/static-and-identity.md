@@ -23,7 +23,7 @@
 |---|---|---|
 | bundleName | 仍匹配 `com.example.*` | FAIL |
 | vendor | 仍为 `example` | FAIL |
-| versionName | 仍为 `1.0.0`，可能未与 Android 同步 | WARN |
+| versionName | 仍为 `1.0.0`，可能未与 iOS 同步 | WARN |
 | app_name | 解析应用实际引用的名称资源；与 Spec 已明确记录的名称不一致 | FAIL |
 | 前景/背景图标 | 对实际使用的 foreground/background PNG 检查大小，≤ 1 KB 时提示疑似默认图 | WARN |
 | 自适应图标 | `layered_image.json` 存在，前景/背景引用均可解析到实际资源 | 缺失或引用错误为 FAIL |

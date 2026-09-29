@@ -1,6 +1,6 @@
 # 系统相机 CameraKit
 
-> 使用 `@kit.CameraKit` 的 `cameraPicker` 拉起系统相机，替代 Android 的 `MediaStore.ACTION_IMAGE_CAPTURE`。
+> 使用 `@kit.CameraKit` 的 `cameraPicker` 拉起系统相机，替代 iOS 的 `MediaStore.ACTION_IMAGE_CAPTURE`。
 
 ---
 

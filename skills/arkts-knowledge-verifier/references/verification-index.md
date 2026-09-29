@@ -34,7 +34,6 @@
 | **项目结构** | "多模块项目怎么组织？" "HAR 模块怎么配置？" | `arkts-project-scaffolder/references/multi-module-template.md` |
 | **数据源** | "IDataSource 怎么实现？" "BasicDataSource 完整代码？" | `arkts-data-layer/references/datasource-patterns.md` |
 | **功能模式** | "搜索功能怎么做？" "下拉刷新怎么实现？" | `arkts-pattern-library/references/` |
-| **三方库迁移** | "Glide 用什么替代？" "build.gradle 依赖怎么迁移？" | `arkts-library-migration/SKILL.md` + `references/library-mapping-table.md` |
 | **系统能力** | "怎么获取相册图片？" "后台播放怎么实现？" "文件存哪里？" | `arkts-system-capabilities/SKILL.md` + `references/` |
 | **数据库操作** | "RdbStore 怎么初始化？" "ResultSet 怎么遍历？" | `arkts-data-layer/references/rdbstore-dao-patterns.md` |
 | **Skill 路由** | "这个需求该用哪个 skill？" "多个 skill 怎么配合？" | 本 skill `references/skill-routing-guide.md` |

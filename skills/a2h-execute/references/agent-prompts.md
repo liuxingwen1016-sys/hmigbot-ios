@@ -19,7 +19,7 @@
 
 | 派发点 | agent | 文件 |
 |--------|-------|------|
-| §1 Stage 1 converter | a2h-activity-converter | [`agent-prompts/1-converter.md`](./agent-prompts/1-converter.md) |
+| §1 Stage 1 converter | a2h-ios-converter | [`agent-prompts/1-converter.md`](./agent-prompts/1-converter.md) |
 | §2 Stage 1 Batch 收尾 | **a2h-closer**（mode=batch，协议在 agent 定义） | [`agent-prompts/2-batch-closer.md`](./agent-prompts/2-batch-closer.md) |
 | §3 Stage 2/3 通用 worker | a2h-migration-worker | [`agent-prompts/3-worker.md`](./agent-prompts/3-worker.md) |
 | §4 Stage 3 Step 3a UI 补充 | a2h-migration-worker | [`agent-prompts/4-step3a-ui.md`](./agent-prompts/4-step3a-ui.md) |

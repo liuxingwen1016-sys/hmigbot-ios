@@ -1,6 +1,6 @@
 ---
 name: arkts-media-playback
-description: 生成 ArkTS/HarmonyOS **音频**播放代码。当用户需要实现 AVPlayer 音频播放、本地音频文件播放(fd://协议)、后台音频播放(ContinuousTask+AVSession)、播放速度控制、播放位置保存、队列自动切歌、睡眠定时器时触发。**视频播放（XComponent + Surface + letterbox + 横屏全屏 + 自动隐藏控件 + PiP）请走 [arkts-video-playback](../arkts-video-playback/SKILL.md)。**
+description: "生成 ArkTS/HarmonyOS **音频**播放代码。当用户需要实现 AVPlayer 音频播放、本地音频文件播放(fd://协议)、后台音频播放(ContinuousTask+AVSession)、播放速度控制、播放位置保存、队列自动切歌、睡眠定时器时触发。**视频播放（XComponent + Surface + letterbox + 横屏全屏 + 自动隐藏控件 + PiP）请走 arkts-video-playback。**"
 metadata:
   type: domain
   domain: media
@@ -320,7 +320,7 @@ avPlayer.url = 'fd://' + file.fd.toString();
 | 状态管理（AppStorage） | `arkts-state-manager/SKILL.md` |
 | 系统能力（权限/文件） | `arkts-system-capabilities/SKILL.md` |
 | 验证 API 兼容性 | `arkts-knowledge-verifier/SKILL.md` |
-| Android UI 对齐 | `arkts-ui-alignment/SKILL.md` |
+| iOS UI 对齐 | `arkts-ui-alignment/SKILL.md` |
 
 > 完整路由矩阵见 `arkts-knowledge-verifier/references/skill-routing-guide.md`
 

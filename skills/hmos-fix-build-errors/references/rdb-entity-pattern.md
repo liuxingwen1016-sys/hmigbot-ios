@@ -1,6 +1,6 @@
 # RDB Entity 确定性修复 Pattern
 # 适用于: ArkTS 严格模式 + @kit.ArkData relationalStore
-# 触发场景: 迁移 Android RDB 实体类到 ArkTS 时
+# 触发场景: 迁移 iOS RDB 实体类到 ArkTS 时
 # 经验来源: EinkBro 迁移 (2026-03-26)
 
 ---

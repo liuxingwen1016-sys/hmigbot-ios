@@ -66,7 +66,7 @@
 - 不为不可能发生的场景做错误处理
 - 写了 200 行能用 50 行的，重写
 
-> **迁移场景例外**：与 spec / Android 源一致优先于代码量；**不主动 simplify 已 spec 出来的内容**。忠实复刻（C12 类目）的决议优先于本原则——Android 原版 200 行的 8 tab 页面在 spec 里就是 8 tab，不要"优化"成 3 tab。
+> **迁移场景例外**：与 spec / iOS 源一致优先于代码量；**不主动 simplify 已 spec 出来的内容**。忠实复刻（C12 类目）的决议优先于本原则——iOS 原版 200 行的 8 tab 页面在 spec 里就是 8 tab，不要"优化"成 3 tab。
 
 自检："高级工程师会觉得这过度复杂吗？"——如是，简化。
 
@@ -77,7 +77,7 @@
 编辑已有代码时：
 - 不要"顺手优化"相邻代码、注释或格式
 - 不要重构没坏的东西
-- **优先 match HarmonyOS / ArkTS 最佳实践**，不要 match Android 风格、也不要 match 偶然的早期 ArkTS 产物风格——pipeline 生成代码以最佳实践为准
+- **优先 match HarmonyOS / ArkTS 最佳实践**，不要 match iOS 风格、也不要 match 偶然的早期 ArkTS 产物风格——pipeline 生成代码以最佳实践为准
 - 若发现无关的死代码，提及它，不要删除
 
 当你的改动产生孤儿（orphans）时：
@@ -162,13 +162,13 @@ PROCEDURE:
   IF !exists(CLAUDE_MD):
     # 项目尚无 AGENTS.md（如 baseline 模式）→ 创建最小骨架
     # 重要：intro 必须全中文；仅路径、项目名、文件名等保留原始字符串
-    # **严禁**模型自行用英文描述项目背景（错误示范："Android→HarmonyOS migration workspace for ..."）
+    # **严禁**模型自行用英文描述项目背景（错误示范："iOS→HarmonyOS migration workspace for ..."）
     BODY_HARMONYOS = SNIPPET_BODY_HARMONYOS_DEV if HMOS_DEV_SKILL_AVAILABLE else ""
     write(CLAUDE_MD, f"""
       # {项目名}
 
-      > Android → HarmonyOS 迁移工作区：{项目名}。
-      > 源项目：{android_source_path}{tech_stack_chinese_note}。
+      > iOS → HarmonyOS 迁移工作区：{项目名}。
+      > 源项目：{source_path_path}{tech_stack_chinese_note}。
       > Spec baseline 在 `spec/baseline/`；项目决策历史在 @spec/decision-ledger.md。
 
       {SNIPPET_BODY_DECISION}
@@ -180,12 +180,9 @@ PROCEDURE:
     RETURN created
 
   # 占位符填充规则：
-  #   {项目名}                    = a2h-spec 探测的项目短名（如 pokedex-compose / notepad-android）
-  #   {android_source_path}       = a2h-spec Step 3.0 记录的 $ANDROID_SRC（原始路径，不翻译）
+  #   {source_path_path}       = a2h-spec Step 3.0 记录的 $SOURCE_ROOT（原始路径，不翻译）
   #   {tech_stack_chinese_note}   = 可选，技术栈中文简述：
-  #                                  - "（Jetpack Compose，无 XML 布局）"
   #                                  - "（传统 View 体系，含 XML 布局）"
-  #                                  - "（Kotlin + 部分 Compose + XML 混合）"
   #                                  自动探测；无法探测时留空字符串
 
   content = read(CLAUDE_MD)

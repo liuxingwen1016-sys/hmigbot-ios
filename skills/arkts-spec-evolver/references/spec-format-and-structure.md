@@ -103,7 +103,7 @@ spec/
 # Project Migration Spec
 
 ## 元数据
-- 源项目: <project> (Android)
+- 源项目: <project> (iOS)
 - 生成时间: YYYY-MM-DD
 - a2h-spec 版本: v4
 - ref 来源: ai-generated

@@ -1,6 +1,6 @@
 # 文件管理器 DocumentViewPicker
 
-> 使用 `@kit.CoreFileKit` 的 `picker` 模块拉起系统文件管理器，替代 Android 的 `Intent.ACTION_OPEN_DOCUMENT` 和 `Intent.ACTION_CREATE_DOCUMENT`。
+> 使用 `@kit.CoreFileKit` 的 `picker` 模块拉起系统文件管理器，替代 iOS UIDocumentPickerViewController 的导入/导出语义。
 
 ---
 
@@ -15,7 +15,7 @@ import { common } from '@kit.AbilityKit';
 
 ## 唤起文件管理器（选择文件）
 
-> 对应 Android：`Intent.ACTION_OPEN_DOCUMENT`
+> iOS 源参考：UIDocumentPickerViewController 的打开/导入流程，保留安全作用域与访问期限
 
 ### 基础用法
 
@@ -64,7 +64,7 @@ function openFileManagerWithFilter(context: common.UIAbilityContext): void {
 
 ## 唤起文件管理器（保存文件）
 
-> 对应 Android：`Intent.ACTION_CREATE_DOCUMENT`
+> iOS 源参考：UIDocumentPickerViewController 的导出流程，保留目标选择和取消行为
 
 ### 基础用法
 
@@ -155,7 +155,7 @@ function saveWebPage(context: common.UIAbilityContext, title: string, content: s
 
 ## DocumentViewPicker 其他方法
 
-| 方法 | 用途 | 对应 Android |
+| 方法 | 用途 | 对应 iOS |
 |------|------|-------------|
 | `.select(options)` | 选择文件（可多选） | `ACTION_OPEN_DOCUMENT` |
 | `.save(options)` | 保存文件 | `ACTION_CREATE_DOCUMENT` |

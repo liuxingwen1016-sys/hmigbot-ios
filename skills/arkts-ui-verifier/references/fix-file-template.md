@@ -47,7 +47,7 @@ disposition_set_at_round: null
 
 # {title}
 
-## 1. Android 源码依据与 Spec 参考
+## 1. iOS 源码依据与 Spec 参考
 > {原文直引，≤ 5 行}
 
 来源: {spec/baseline/ui/page_00xx.md §节标题 或 spec/baseline/features/F00x.md §ACn}
@@ -80,9 +80,9 @@ disposition_set_at_round: null
 
 当 `suggested_files` 为空时，写成单行 `suggested_files: []`，不要保留空列表项。
 
-正文 §1 必须引用 PAGE_MAP/MAPPING_REVISION、实际读取的 Android 文件/符号/哈希及相关 Dialog，再附 UI Spec 作为参考。以下示例中的 Spec 链接仅演示参考字段，不足以单独支撑产品判定；writer 必须按目标项目补齐源码依据，不得编造。
+正文 §1 必须引用 PAGE_MAP/MAPPING_REVISION、实际读取的 iOS 文件/符号/哈希及相关 Dialog，再附 UI Spec 作为参考。以下示例中的 Spec 链接仅演示参考字段，不足以单独支撑产品判定；writer 必须按目标项目补齐源码依据，不得编造。
 
-问题 writer 的身份与预期字段只能来自 `case-outcomes.json`，而 outcome 必须与 planned/case inventory 的设计主键和 owner 一致。页面/journey `it()` 与 navigation preflight 都只是复制设计 ID，不能用扫描到的实际测试名反向生成本文件。静态项在 outcome 中必须明确 `business_assertions_run=false`；正文 `## 3` 要写“未生成/未执行功能断言，结论来自当前轮Android 行为与鸿蒙静态源码证据”。
+问题 writer 的身份与预期字段只能来自 `case-outcomes.json`，而 outcome 必须与 planned/case inventory 的设计主键和 owner 一致。页面/journey `it()` 与 navigation preflight 都只是复制设计 ID，不能用扫描到的实际测试名反向生成本文件。静态项在 outcome 中必须明确 `business_assertions_run=false`；正文 `## 3` 要写“未生成/未执行功能断言，结论来自当前轮iOS 行为与鸿蒙静态源码证据”。
 
 ## 示例一：一个功能点由多个 UI 断言共同证明
 
@@ -124,7 +124,7 @@ disposition_set_at_round: null
 
 # 点击字体设置行应打开字体对话框
 
-## 1. Android 源码依据与 Spec 参考
+## 1. iOS 源码依据与 Spec 参考
 > 点击字体设置项后，显示字体选择对话框。
 
 来源: spec/baseline/ui/page_0010_SettingsPage.md §交互行为
@@ -196,7 +196,7 @@ disposition_set_at_round: null
 
 # 自动播放设置离页重进后仍保持开启
 
-## 1. Android 源码依据与 Spec 参考
+## 1. iOS 源码依据与 Spec 参考
 > 自动播放开关的设置在再次进入设置页时保持不变。
 
 来源: spec/baseline/features/F010.md §AC3
@@ -264,7 +264,7 @@ disposition_set_at_round: null
 
 # 字体对话框用例被设置页导航失败阻塞
 
-## 1. Android 源码依据与 Spec 参考
+## 1. iOS 源码依据与 Spec 参考
 > 点击字体设置项后，显示字体选择对话框。
 
 来源: spec/baseline/ui/page_0010_SettingsPage.md §交互行为
@@ -295,7 +295,7 @@ disposition_set_at_round: null
 
 ## 示例四：页面可达但功能完全未实现的静态 RED
 
-此例的 ID 来自页面设计 §B，`planning_state=IMPL_MISSING_STATIC`。canonical 页面已有可达证据，但构造用例所需的业务 trigger/control 由 Android 源码确认应有，但在鸿蒙源码和控件树中均确认不存在，因此不生成空 `it()`。planned/case inventory 仍保留非空 `expected_test_file`，问题 outcome/frontmatter 的 `test_file` 则为 `null`。
+此例的 ID 来自页面设计 §B，`planning_state=IMPL_MISSING_STATIC`。canonical 页面已有可达证据，但构造用例所需的业务 trigger/control 由 iOS 源码确认应有，但在鸿蒙源码和控件树中均确认不存在，因此不生成空 `it()`。planned/case inventory 仍保留非空 `expected_test_file`，问题 outcome/frontmatter 的 `test_file` 则为 `null`。
 
 ```markdown
 ---
@@ -312,7 +312,7 @@ kind: RED
 failure_class: IMPL_MISSING
 blocked_by: null
 cause_id: null
-failed_step: 设置页缺少 Android 源码确认要求的导出 trigger/control
+failed_step: 设置页缺少 iOS 源码确认要求的导出 trigger/control
 persistence_boundary: none
 severity: P1
 
@@ -332,7 +332,7 @@ disposition_set_at_round: null
 
 # 设置页缺少导出设置功能
 
-## 1. Android 源码依据与 Spec 参考
+## 1. iOS 源码依据与 Spec 参考
 > 设置页提供导出设置入口，点击后显示导出结果。
 
 来源: spec/baseline/ui/page_0010_SettingsPage.md §导出设置
@@ -340,8 +340,8 @@ disposition_set_at_round: null
 ## 2. 功能点与 UI 预期
 - 功能点：用户点击导出设置后看到导出结果
 - 导航前置：`NAV_P0010_FROM_APP_ENTRY`；已有证据确认可通过真实可见组件到达设置页 landmark
-- 用户操作：点击 Android 源码确认要求的导出设置入口
-- UI 后置条件 1：显示导出成功结果或 Android 源码定义的错误反馈
+- 用户操作：点击 iOS 源码确认要求的导出设置入口
+- UI 后置条件 1：显示导出成功结果或 iOS 源码定义的错误反馈
 - 持久化边界：none
 
 ## 3. 实际结果
@@ -352,16 +352,16 @@ disposition_set_at_round: null
 
 ## 4. 首因与归属
 - failure_class：IMPL_MISSING
-- 首因：Android 源码确认要求的导出设置业务入口及行为未实现
+- 首因：iOS 源码确认要求的导出设置业务入口及行为未实现
 - 归属：product
 - 证据定位：settings-source-audit.txt:21；settings-tree.json#/root
 
 ## 5. 修复建议
-1. 以 Android 源码为主要依据实现真实用户可见的导出入口、处理行为和可观察结果，不增加测试专用入口或 ID。
+1. 以 iOS 源码为主要依据实现真实用户可见的导出入口、处理行为和可观察结果，不增加测试专用入口或 ID。
 2. 实现后将原设计 ID 改回 RUNNABLE，按 canonical UI 路径生成并执行同 ID 用例。
 ```
 
-若真实 action 已可执行且 expected UI matcher 可由 Android 行为/鸿蒙资源契约确定，即使预计产品会失败，也不能使用此静态模板；应生成 `RUNNABLE` 测试并让真实执行形成 RED。
+若真实 action 已可执行且 expected UI matcher 可由 iOS 行为/鸿蒙资源契约确定，即使预计产品会失败，也不能使用此静态模板；应生成 `RUNNABLE` 测试并让真实执行形成 RED。
 
 ## 填写检查
 
@@ -374,7 +374,7 @@ disposition_set_at_round: null
 | 必需操作或 landmark 无产品已有的稳定唯一 ID，也无唯一可见文本/合法关系语义 locator | 只写一份页面级 `ERROR/UNREACHABLE_BY_UI`，移出 runnable UI inventory 并转 UT/集成或人工验证；不生成 flow/test、不生成 `BLOCKED_BY_NAVIGATION`，不注入 ID、不坐标硬点、不修改生产组件 |
 | 目标页已确认，操作也命中，但应出现的 UI 结果缺失 | `RED/FUNCTION` |
 | 页面可达，但构造用例必需的业务 trigger/action/control 完全不存在 | 设计 ID 保持不变，`IMPL_MISSING_STATIC` 合成 `RED/IMPL_MISSING`；`test_file:null`、`blocked_by:null`、`business_assertions_run=false` |
-| 真实 action 可执行、expected matcher 可由 Android 行为/鸿蒙资源契约确定，但运行后结果缺失 | 保持 RUNNABLE，由同 ID `it()` 的真实结果形成 `RED/FUNCTION`，不静态判失败 |
+| 真实 action 可执行、expected matcher 可由 iOS 行为/鸿蒙资源契约确定，但运行后结果缺失 | 保持 RUNNABLE，由同 ID `it()` 的真实结果形成 `RED/FUNCTION`，不静态判失败 |
 | Driver、设备、构建或 runner 无法形成产品判定 | `ERROR/INFRA`；若发生在任何 preflight 前，所有 RUNNABLE ID 各自单一 ERROR，本轮不派生 blocked |
 | 需求本身没有 UI 操作路径/可观察结果，或无法形成合法唯一语义 locator | 只写 `ERROR/UNREACHABLE_BY_UI`，移出 runnable UI inventory，转 UT/集成或人工验证，不生成伪测试或 blocked 记录 |
 | `NETWORK_OFFLINE` | 按证据判断：离线功能真实执行后的 UI 错误为 RED/FUNCTION；测试未准备声明状态为 ERROR/SETUP；非预期外部断网为 ERROR/INFRA |

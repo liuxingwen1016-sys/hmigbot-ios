@@ -1,6 +1,6 @@
 ---
 name: arkts-component-builder
-description: 生成 ArkTS/HarmonyOS 声明式 UI 组件代码（V2 优先，API 12+）。当用户需要创建页面、编写组件、设计布局（Column/Row/Stack/Grid/List/Flex）、创建自定义组件、编写 ForEach/LazyForEach/Repeat 列表、处理响应式断点适配、实现卡片/列表/表单/弹窗等 UI 元素、或生成任何 .ets UI 代码时，务必触发此 skill。即使只说"帮我写个页面""做个界面"也应触发。完整业务功能（搜索/登录/列表详情页）优先 arkts-pattern-library；页面导航/路由用 arkts-navigation-builder。
+description: "生成 ArkTS/HarmonyOS 声明式 UI 组件代码（V2 优先，API 12+）。当用户需要创建页面、编写组件、设计布局（Column/Row/Stack/Grid/List/Flex）、创建自定义组件、编写 ForEach/LazyForEach/Repeat 列表、处理响应式断点适配、实现卡片/列表/表单/弹窗等 UI 元素、或生成任何 .ets UI 代码时，务必触发此 skill。即使只说\"帮我写个页面\"\"做个界面\"也应触发。完整业务功能（搜索/登录/列表详情页）优先 arkts-pattern-library；页面导航/路由用 arkts-navigation-builder。"
 metadata:
   type: domain
   domain: ui
@@ -47,47 +47,32 @@ V2 vs V1 关键差异（UI 视角）：
 
 输入: 文字描述 + 可选 design tokens
 输出: ArkTS 组件代码（V2）
-适用: 新建轨、无 Android 参考的组件
+适用: 新建轨、无 iOS 参考的组件
 
-### 模式 B: Android 源码参照（精细迁移）
 
-输入:
-  - android_layout: XML 布局文件路径（必须）— Agent 必须先 Read 此文件
-  - android_class: Java/Kotlin 类文件路径（必须）— Agent 必须先 Read 此文件
-  - design_tokens: 共享样式常量路径（可选）— 来自 ui-framework Task 的产出
+### 模式 B: iOS 原生源码参照
 
-执行规则:
-  1. **先读后写**: 必须先 Read android_layout 和 android_class 的完整内容，禁止跳过
-  2. **提取属性**: 从 XML 中提取所有 View 及其属性（尺寸、间距、颜色、字号、圆角、阴影、可见性）
-  3. **组件映射**: 按以下对照表逐组件转写:
-     - FrameLayout → Stack
-     - LinearLayout (vertical) → Column
-     - LinearLayout (horizontal) → Row
-     - RelativeLayout / ConstraintLayout → RelativeContainer 或 Column+Row 组合
-     - RecyclerView (horizontal) → List(){...}.listDirection(Axis.Horizontal)（`listDirection` 是链式属性，不是构造器参数）
-     - RecyclerView (vertical) → List + LazyForEach（V2 推荐 `Repeat`）
-     - CardView → Column + .borderRadius() + .shadow()
-     - ImageView → Image
-     - TextView → Text
-     - ProgressBar (linear) → Progress({ type: ProgressType.Linear })
-     - ProgressBar (circular) → Progress({ type: ProgressType.Ring })
-     - SwipeRefreshLayout → Refresh
-  4. **属性转换**: dp → vp (1:1), sp → fp (1:1), 颜色值直接复制, match_parent → '100%', wrap_content → 默认
-  5. **共享 tokens**: 如提供 design_tokens 路径，必须使用其中定义的常量而非硬编码
-  6. **交互保持**: onClick → .onClick(), onLongClick → LongPressGesture, SwipeAction 保留
+输入 source_anchors、page_spec、ios-semantics 对应 page ID 和资源映射。
+先读实际 Swift/Objective-C/IB 源码；按 ios-ui-to-arkui 的完整规程解析框架语义。
+SwiftUI 保存 body 组合、状态所有权、Binding、modifier 顺序、identity、task 和导航值；
+UIKit 保存 controller、约束、delegate、outlet/action、复用及生命周期。
+目标代码仍使用本技能下文的组件、布局、V2 约束与参考，不把源装饰器机械照搬。
+point/vp、字体、safe area 依设备条件校验；源初态与 Preview 假数据分开。
+转换需保持真实交互和反馈，业务部分由 owning_slice 完成并交 closer 接线。
+
 
 ### SymbolGlyph 图标预验证
 
 生成 UI 代码前，如果需要使用系统图标：
 1. 读取 arkts-knowledge-verifier/references/verified-symbols.md 获取已验证名称列表
 2. 只使用列表中的名称，不要猜测或创造新名称
-3. 如果 Android 对应图标在验证列表中找不到等价物，使用最接近的替代或使用自定义图片资源
+3. 如果 iOS 对应图标在验证列表中找不到等价物，使用最接近的替代或使用自定义图片资源
 
 已知不存在的常见名称: music_note (用 music), doc_on_doc (用 list_bullet), copy (用 checkmark), tray_fill (用 envelope), square_and_arrow_up (用 share)
 
 适用: 精细迁移轨（轨道 0）的页面框架和组件生成
 
-触发判断: 当 task 包含 android_layout 或 android_source 字段时，自动使用模式 B
+触发判断: 当 task 包含 source_anchors 或 source_path 字段时，自动使用模式 B
 
 ---
 
@@ -299,7 +284,7 @@ Image($rawfile('images/banner.png'))
 | 8 | 自定义组件尾随闭包后直接链式 `.width()/.border()`（`Comp(){...}.width()`） | 报 `Cannot find name 'width'` / `Declaration or statement expected`；**外层套内置容器** `Column(){ Comp(){...} }.width()`，属性加在容器上（内置容器可链、自定义组件不可） |
 | 9 | 运行时按数据选排版：写成 `WrapBuilder` / 在 @Builder 里 `const wb=...` / 对方法调用结果 `.builder()` | 类型是 **`WrappedBuilder<[T]>`**（非 `WrapBuilder`）；选取放 @Builder **外**（数据装配时算好）落到数据字段或 `this` 成员，再用成员/循环变量调用 `row.wb.builder(row)`；禁 `this.pick(k).builder(...)`、禁 @Builder 内 `const` |
 | 10 | 自定义布局里把 `constraint.maxWidth` 当 number 直接算术 / 自写 `toPx(x:string\|number)` 转它 | 约束字段是 `Length`(含 `Resource`)；算术前 **`as number` 收窄**（`constraint.maxWidth as number`），别自写排除 Resource 的 toPx（报 `Type 'Resource' is not assignable to 'string \| number'`）；详见 `references/v2-layout-patterns.md` §7 |
-| 11 | 可滚动组件（List/Scroll/Grid/WaterFlow）嵌在外层滚/滑容器（Swiper/Tabs/父 Scroll/父 List）里，内层滚不动、手势被外层吃掉 | 内层想先响应就配 `.nestedScroll({ scrollForward: NestedScrollMode.SELF_FIRST, scrollBackward: NestedScrollMode.SELF_FIRST })`（HarmonyOS 不像 Android 自动分发嵌套手势）；如 Swiper 内嵌横向 List 不配会翻页而非滚 List；四值/写法见 `references/v2-scroll-and-form-components.md` §3.5 |
+| 11 | 可滚动组件（List/Scroll/Grid/WaterFlow）嵌在外层滚/滑容器（Swiper/Tabs/父 Scroll/父 List）里，内层滚不动、手势被外层吃掉 | 内层想先响应就配 `.nestedScroll({ scrollForward: NestedScrollMode.SELF_FIRST, scrollBackward: NestedScrollMode.SELF_FIRST })`（必须按目标嵌套容器显式核验手势分发）；如 Swiper 内嵌横向 List 不配会翻页而非滚 List；四值/写法见 `references/v2-scroll-and-form-components.md` §3.5 |
 
 > **MUST**：每条「错误 vs 正确」完整代码见 `references/v2-codegen-patterns.md` §常见错误 / §wrapBuilder。
 
@@ -308,7 +293,7 @@ Image($rawfile('images/banner.png'))
 ## Linter 共存规则
 
 本项目的项目级 linter 会自动重写 `.ets` 文件，包括：
-- 将 Android SVG 素材引用 (`$r('app.media.ic_xxx_vector')`) 替换为 `SymbolGlyph($r('sys.symbol.xxx'))`
+- 将 iOS SVG 素材引用 (`$r('app.media.ic_xxx_vector')`) 替换为 `SymbolGlyph($r('sys.symbol.xxx'))`
 - 重新格式化 import 块
 - 删除或重新生成文件头注释
 
@@ -339,13 +324,12 @@ Agent 在与 linter 交互时必须遵守以下规则：
 
 在决定创建一个共享 UI 组件之前，必须通过以下三项判定：
 
-1. **多调用方**：Android 源项目中这个 View/布局是否被 **3 个以上**调用方使用？
+1. **多调用方**：iOS 源项目中这个 View/布局是否被 **3 个以上**调用方使用？
 2. **纯数据配置**：各调用方对它的差异是否**仅限数据**（text、visibility、count），而非行为或状态？
-3. **无动态图标切换**：是否存在调用方特有的动态图标切换逻辑（例如 ViewPagerActivity 的方向图标在 portrait/landscape/auto 间切换，而 PhotoVideoActivity 没有方向图标）？
+3. **无动态图标切换**：是否存在调用方特有的动态图标切换逻辑（例如媒体页有方向状态切换，而预览页不提供该行为）？
 
 **任意一条不满足 → 不抽取共享组件**。改为各页面独立内联实现，在页面注释中标明源布局引用。
 
-**缘由**：内联优于一个需要 5+ 个 `@Param` flag（如 `isCurrentHidden`、`orientationMode`、`isOrientationLocked`）来控制行为差异的臃肿抽象。Android 源项目中 `bottom_actions.xml` 并非一个已封装的可复用 widget — 每个 Activity 独立引用它，Kotlin 代码中的图标切换逻辑各不相同。
 
 ---
 
@@ -449,7 +433,7 @@ Button('Play')
 | 动画效果（animateTo/transition） | `arkts-animation-builder/SKILL.md` |
 | 媒体播放 | `arkts-media-playback/SKILL.md` |
 | 文件下载 | `arkts-download-manager/SKILL.md` |
-| Android UI 对齐 | `arkts-ui-alignment/SKILL.md` |
+| iOS UI 对齐 | `arkts-ui-alignment/SKILL.md` |
 
 > 完整路由矩阵见 `arkts-knowledge-verifier/references/skill-routing-guide.md`
 

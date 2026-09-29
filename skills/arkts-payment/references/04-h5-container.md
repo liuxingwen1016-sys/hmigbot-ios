@@ -9,15 +9,15 @@
 HarmonyOS WebView 默认 UA 含 `ArkWeb`，微信 / 支付宝 H5 网关 UA 检测失败 → 直接白屏。
 
 ```typescript
-// UA 字符串本身不重要，关键特征：像 Android Chrome 移动端
+// UA 字符串本身不重要，关键特征：像 iOS Chrome 移动端
 export const PAYMENT_USER_AGENT =
-  'Mozilla/5.0 (Linux; Android 14; Pixel 8 Build/UQ1A.240205.002) ' +
+  'Mozilla/5.0 (Linux; iOS 14; Pixel 8 Build/UQ1A.240205.002) ' +
   'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.6261.64 Mobile Safari/537.36'
 
 Web({ src, controller }).userAgent(PAYMENT_USER_AGENT)
 ```
 
-UA 必须包含：`Android` + `AppleWebKit` + `Chrome` + `Mobile Safari` 这几个标识。
+UA 必须包含：`iOS` + `AppleWebKit` + `Chrome` + `Mobile Safari` 这几个标识。
 
 ### 要素 2：Referer 注入
 

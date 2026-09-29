@@ -28,9 +28,9 @@
 |------|---------|--------------|----------------------|-------|
 | `thirdparty-sdk` | 三方 SDK **没有对应的 HMOS 适配 skill**（skill-binding-rules.md 未命中，如自研 / 小众 / 埋点等）；已有 skill 的 SDK 直接走 task `suggested_skills` 路径、**已有 decision-ledger approved 原生/自建替代决策的归 owned task**（Step 4.1 判据 0）——两者都不进本表 | `entry/src/main/ets/<file>#<symbol>` | `<业务类别> SDK 入仓` / `<api> 上线` 等白名单 | plan 阶段直写（Step 4.1 SDK 决策树未命中项） |
 | `forward-ref` | 早阶段代码桩（converter UI 钩子 / Base signature / 跨切片 handler） | `entry/src/main/ets/<file>#<symbol>` | `Slice {N} Step {3c\|3d}` | a2h-execute converter / Base worker 执行期自登记 |
-| `resource-pending-translation` | 多语言资源 value 含 `[TODO: translate]` 前缀 | `entry/src/main/resources/<locale>/element/<file>.json:<key>` | `<locale> 翻译就绪`（脚本检测：`grep '\[TODO: translate\]' resources/<locale>/element/*.json` → 0 hits） | android2hmos-resources-convert 在生成 fallback 翻译时自登记 |
-| `resource-pending-asset` | 媒体资源用 fallback（如 `ic_default_avatar` / `ic_placeholder` / `default_thumb` 等占位资产） | `entry/src/main/ets/<file>#<usage>` 或 `entry/src/main/resources/base/media/<asset-id>` | `<resource-id> 就绪`（复用既有：`grep "<resource-id>" entry/src/main/resources/` 命中即视为真实资产已替换 fallback） | a2h-activity-converter / Base worker 用 fallback 资产时自登记 |
-| `forward-ref-uncertain` | converter 转换期自判的不确定动态值 / 不确定区域（几何近似 / 动态值运行时才知）| `entry/src/main/ets/pages/<page>.ets:<line>` | `Slice {N} Step 3a 确认`（由 Stage 3 Slice Step 3a 二次审视时人工确认或升级） | a2h-activity-converter 转换时自判自登记 |
+| `resource-pending-translation` | 多语言资源 value 含 `[TODO: translate]` 前缀 | `entry/src/main/resources/<locale>/element/<file>.json:<key>` | `<locale> 翻译就绪`（脚本检测：`grep '\[TODO: translate\]' resources/<locale>/element/*.json` → 0 hits） | ios-resources-convert 在生成 fallback 翻译时自登记 |
+| `resource-pending-asset` | 媒体资源用 fallback（如 `ic_default_avatar` / `ic_placeholder` / `default_thumb` 等占位资产） | `entry/src/main/ets/<file>#<usage>` 或 `entry/src/main/resources/base/media/<asset-id>` | `<resource-id> 就绪`（复用既有：`grep "<resource-id>" entry/src/main/resources/` 命中即视为真实资产已替换 fallback） | a2h-ios-converter / Base worker 用 fallback 资产时自登记 |
+| `forward-ref-uncertain` | converter 转换期自判的不确定动态值 / 不确定区域（几何近似 / 动态值运行时才知）| `entry/src/main/ets/pages/<page>.ets:<line>` | `Slice {N} Step 3a 确认`（由 Stage 3 Slice Step 3a 二次审视时人工确认或升级） | a2h-ios-converter 转换时自判自登记 |
 | `handoff` | **代码结构完整、编译通过，但要靠别处才算真正完成**：① 委托另一个 skill（"尺寸交 icon-sizing 自愈"）② 依赖别处的调用点（"由启动序列调 setDebug()"）。marker `// HANDOFF: owner=… what=… verify=…` | `entry/src/main/ets/<file>:<line>` | 由 marker 的 `verify=` 断言表达：`grep:<正则>` / `artifact:<文件>#<字段>` / `slice:<N>` | converter / Base worker 在写下"交给 X 处理"这类注释时**同步**登记 |
 
 > **kind 选择决策树**：
@@ -119,8 +119,8 @@ if any(p in trigger_condition for p in BLOCKLIST_PHRASES):
 **不同 kind 的产生时机**：
 - `thirdparty-sdk` → plan 阶段直写（Step 4.1 SDK 决策树未命中项）
 - `forward-ref` / `forward-ref-uncertain` → a2h-execute converter / worker 执行期铸号（写 marker 前登记）
-- `resource-pending-translation` → android2hmos-resources-convert 生成 fallback 翻译时自登记（Stage 0）
-- `resource-pending-asset` → a2h-activity-converter 用 fallback 资产时自登记
+- `resource-pending-translation` → ios-resources-convert 生成 fallback 翻译时自登记（Stage 0）
+- `resource-pending-asset` → a2h-ios-converter 用 fallback 资产时自登记
 
 **行 schema 示例**：
 

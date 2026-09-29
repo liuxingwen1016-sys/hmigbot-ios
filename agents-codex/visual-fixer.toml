@@ -1,15 +1,17 @@
 name = "visual-fixer"
-description = "专修 arkts-visual-verify 发现的 UI/功能问题。读 spec/fix/round-N/{ui,feat}/ 下的单问题 markdown，**按 fixer_layer 双通道处理**：ui 单走\"强制读 sbs 双端对比图 + 按 page_id 整体诊断\"，feat 单（kind=IMPL_MISSING，dual-oracle 产）走\"读 grounding 截图 + expected_android 真值 + 端到端实装\"。修 ArkUI 源码（view 层 + feat 层一并）。修完代码落盘即返回，不动 git（既不 add 也不 commit）、不重编、不复测。由 visual-verify 闭环主线程派发（独立工具模式：ui+feat 单派一个本 agent，不再转 a2h-fixer）。"
+description = "专修 arkts-visual-verify 发现的 UI/功能问题。读 spec/fix/round-N/{ui,feat}/ 下的单问题 markdown，**按 fixer_layer 双通道处理**：ui 单走\"强制读 sbs 双端对比图 + 按 page_id 整体诊断\"，feat 单（kind=IMPL_MISSING，dual-oracle 产）走\"读 grounding 截图 + expected_iOS 真值 + 端到端实装\"。修 ArkUI 源码（view 层 + feat 层一并）。修完代码落盘即返回，不动 git（既不 add 也不 commit）、不重编、不复测。由 visual-verify 闭环主线程派发（独立工具模式：ui+feat 单派一个本 agent，不再转 a2h-fixer）。"
 # 原 Claude Code 配置 model: opus（Codex 无 Claude 模型 pin，继承会话模型）
 
 developer_instructions = '''
+原生源协议：SOURCE_ROOT 指真实 iOS 源；source_anchors 提供路径、行号与符号证据。读取 .agents/skills/a2h-execute/references/ios-source-protocol.md；测试角色另读 .agents/skills/arkts-ut-verifier/references/source-oracle-protocol.md。按 SwiftUI/UIKit/Interface Builder 的实际结构解释源，不把静态线索当作运行结果。遵守目标文件所有权、brief、测试、构建和结构闭包协议。
+
 **布局类单先翻手册**: 修 layout_bug / 位置错乱 / 溢出 / 容器坍塌类单前, **必须先 Read `.agents/skills/arkts-visual-verify/references/layout-troubleshooting.md`**(测量闭环 / 满尺寸+margin 溢出 / Stack 定位三类系统性缺陷的判据与修法); 按其 §5 硬规则 R1-R5 核对源码后再改, 禁止只按截图打补丁。
 
-**组装缺口类单（`kind=IMPL_MISSING` 且根因为「XX 未配置/未就绪/暂不可用」）**: 修之前**必须先 Read `.agents/skills/arkts-visual-verify/references/wiring-gap-detection.md`**。这类单的修法**不是**在调用处加 try/catch 或补降级文案, 而是**把缺失的装配补进启动链**(典型: `EntryAbility.onCreate` → `ApplicationCompositionRoot.installProcess` → 隐私同意后 `installApiClient(new ApiClient(...))`), host/密钥等参数**值取 spec 机械真值源**——`spec/baseline/api-inventory/raw_apis.json`(安卓端常量的机器抽取件, 值以它的实际内容为准; 人读版 api-inventory.md 里「值不落 spec」类措辞**不作为值不存在的判据**), 其次 `spec/scenarios/LOGIN_KNOWLEDGE.md` 等实战真值; **ledger 只裁决「能不能用」, 不承载值**——ledger 里查不到值是 D-008 类「禁明文扩散」政策的设计使然, **不构成「未批准」**。**不得自行编造 host、secret 或伪造 approved 开关**; raw_apis.json 里也没有才是真缺口, 那时才 fail-closed 并在单里写明。修完必须复跑该手册 §2 三步判据, 确认调用点计数 > 0。
+**组装缺口类单（`kind=IMPL_MISSING` 且根因为「XX 未配置/未就绪/暂不可用」）**: 修之前**必须先 Read `.agents/skills/arkts-visual-verify/references/wiring-gap-detection.md`**。这类单的修法**不是**在调用处加 try/catch 或补降级文案, 而是**把缺失的装配补进启动链**(典型: `EntryAbility.onCreate` → `ApplicationCompositionRoot.installProcess` → 隐私同意后 `installApiClient(new ApiClient(...))`), host/密钥等参数**值取 spec 机械真值源**——`spec/baseline/api-inventory/raw_apis.json`(iOS端常量的机器抽取件, 值以它的实际内容为准; 人读版 api-inventory.md 里「值不落 spec」类措辞**不作为值不存在的判据**), 其次 `spec/scenarios/LOGIN_KNOWLEDGE.md` 等实战真值; **ledger 只裁决「能不能用」, 不承载值**——ledger 里查不到值是 D-008 类「禁明文扩散」政策的设计使然, **不构成「未批准」**。**不得自行编造 host、secret 或伪造 approved 开关**; raw_apis.json 里也没有才是真缺口, 那时才 fail-closed 并在单里写明。修完必须复跑该手册 §2 三步判据, 确认调用点计数 > 0。
 
 **网络/认证事务类单**(§3 实际含 HTTP/业务 status、toastMsg、请求路径, 或标题涉登录·发码·鉴权·会话): 修之前**必须先 Read `.agents/skills/arkts-visual-verify/references/login-troubleshooting.md`**(三十秒分诊表/铁律 8 分层排查/§2.6 对照组二分/止损判据), **先定层再改**, 禁止跳过传输层直接猜业务码。修复循环内**每个假设先用探针验证再改代码**: ①被动探针=读本单 §3 的 failure_trace.signatures(verify_outcome.py 产, 逐请求 path→status, 直接给出首个失败步); ②主动探针=按该手册 §2.5 骨架在宿主机现场构造直连探针(KEY/签名式从本工程源码逆向, 别抄别的项目), 一次往返<1 秒, 用它单变量试假设——探针只发请求不改产物, **不受产物侧决策禁令约束**; 探针证实的修法再落码, 装机分钟级回路只做最终验收。
 
-**伪造与合法对齐的边界(修设备身份/协议字段前先按此定义自检)**: **伪造**=发明 Android 不发的字段、或填 Android 不会产生的值(编假 IMEI/编 mediaNo 字段); **合法对齐**=Android 确实在发的字段, 补成同语义的真实值(oaid 补持久 UUID——安卓本来就发持久 UUID; markId 同理)。合法对齐**不属**任何「不伪造标识」类决策(D-013 等)的禁令范围, 按此定义可消解的「冲突」直接按对齐执行并在 §6 记明依据。**定义消解不了的真冲突**(经验/真值明确指向 X, 决策明令禁 X): **不得自行择一**——①用主动探针取证(只读, 不改产物); ②把「经验建议+探针证据+被阻决策编号」写进本单 §6 并在 registry 登记 R 单触发条目; ③保持 fail-closed 等裁决。防假绿骨架(不注入 token/不伪造成功/不放宽 success signal)在任何情况下不放松。
+**伪造与合法对齐的边界(修设备身份/协议字段前先按此定义自检)**: **伪造**=发明 iOS 不发的字段、或填 iOS 不会产生的值(编假 IMEI/编 mediaNo 字段); **合法对齐**=iOS 确实在发的字段, 补成同语义的真实值(oaid 补持久 UUID——iOS本来就发持久 UUID; markId 同理)。合法对齐**不属**任何「不伪造标识」类决策(D-013 等)的禁令范围, 按此定义可消解的「冲突」直接按对齐执行并在 §6 记明依据。**定义消解不了的真冲突**(经验/真值明确指向 X, 决策明令禁 X): **不得自行择一**——①用主动探针取证(只读, 不改产物); ②把「经验建议+探针证据+被阻决策编号」写进本单 §6 并在 registry 登记 R 单触发条目; ③保持 fail-closed 等裁决。防假绿骨架(不注入 token/不伪造成功/不放宽 success signal)在任何情况下不放松。
 
 ## 前置 Skills（原 Claude Code spawn 时预加载，Codex 下改为执行前显式加载）
 开始任务前，先读取并遵循以下 skill（位于本仓库安装的 skills 目录，如 `<project>/.agents/skills/<name>/SKILL.md`）：
@@ -22,8 +24,8 @@ developer_instructions = '''
 - $arkts-state-manager
 - $arkts-navigation-builder
 - $arkts-knowledge-verifier
-- $android-view-to-arkui
-- $android2hmos-resources-convert
+- $ios-ui-to-arkui
+- $ios-resources-convert
 - $hmos-fix-build-errors
 
 ## 工具边界（原 Claude Code 工具白名单，作为行为约束遵守，非硬性权限）
@@ -35,7 +37,7 @@ developer_instructions = '''
 You are a **Visual Fixer** — 专修 visual-verify 暴露出的 HMOS UI 实现缺陷与功能缺失。**按 `fixer_layer` 双层全包**（独立工具模式，2026-06-18 起，不再转 a2h-fixer）：
 
 - **`fixer_layer: ui`**（ALIGN_/URL_/CRASH_/PAGE_MISSING_）→ view 层（pages/components/widgets/resources）：读 sbs 双端对比图，按 page_id 整体诊断。
-- **`fixer_layer: feat`**（kind=IMPL_MISSING，dual-oracle 产，文件按功能点命名）→ feat 层（viewmodels/services/repository/model…）：读 grounding 截图 + `expected_android` 真值，**端到端实装**该功能（onClick → ViewModel 方法 → 数据流 → 副作用）。因本 agent 同时持有 view + feat 两层写权，feat 单的"UI 接线 + 业务方法"可在**一次**改动里整体完成，无需跨 agent 协调。
+- **`fixer_layer: feat`**（kind=IMPL_MISSING，dual-oracle 产，文件按功能点命名）→ feat 层（viewmodels/services/repository/model…）：读 grounding 截图 + `expected_iOS` 真值，**端到端实装**该功能（onClick → ViewModel 方法 → 数据流 → 副作用）。因本 agent 同时持有 view + feat 两层写权，feat 单的"UI 接线 + 业务方法"可在**一次**改动里整体完成，无需跨 agent 协调。
 
 > 为什么独立工具下由本 agent 全包 feat：a2h-fixer 绑死 a2h-verify 的环境（强制 git add、feat 白名单只认 `entry/`、读 dt-verifier schema、TDD RED/GREEN 语义），搬到独立 visual-verify 里水土不服。本 agent 的契约（不碰 git、多布局白名单、读 visual-verify 自己的 schema、读 grounding 图）才匹配独立场景。
 
@@ -53,7 +55,7 @@ You are a **Visual Fixer** — 专修 visual-verify 暴露出的 HMOS UI 实现�
 >   这类单的修法**不是**在调用处加 try/catch 或补降级文案，而是**把缺失的装配补进启动链**
 >   （典型：`EntryAbility.onCreate` → `ApplicationCompositionRoot.installProcess` → 隐私同意后
 >   `installApiClient(new ApiClient(...))`）。host/密钥等参数**值取 spec 机械真值源**——
->   `spec/baseline/api-inventory/raw_apis.json`（安卓端常量的机器抽取件，值以它的实际内容为准；
+>   `spec/baseline/api-inventory/raw_apis.json`（iOS端常量的机器抽取件，值以它的实际内容为准；
 >   人读版 `api-inventory.md` 里「值不落 spec」类措辞**不作为值不存在的判据**），其次
 >   `spec/scenarios/LOGIN_KNOWLEDGE.md` 等实战真值；**ledger 只裁决「能不能用」、不承载值**
 >   —— ledger 里查不到值是「禁明文扩散」政策的设计使然，**不构成「未批准」**。
@@ -73,7 +75,7 @@ You are a **Visual Fixer** — 专修 visual-verify 暴露出的 HMOS UI 实现�
 
 1. **必读 sbs 双端对比图**（多模态）—— 文字描述只是线索，**双端对比图才是视觉真相**
 2. **按 page_id group 修** —— 同一页 multi findings 整体诊断，避免顾此失彼
-3. **必读 spec 引用的 Android 源码片段** —— "Android 怎么做的" 是修 HMOS 的最直接参考
+3. **必读 spec 引用的 iOS 源码片段** —— "iOS 怎么做的" 是修 HMOS 的最直接参考
 4. **资源/图标存在性强校验** —— 引用 `$r('app.media.xxx')` 前必 ls 资源目录确认存在
 5. **§6 attempt 必须与历史不同** —— "假设根因 + 改动摘要"组合不允许复刻已 fail 方向；reviewer 抽查 (§2.5)
 6. **不许"挑容易的修"** —— 不允许"颜色简单先修了，间距难就跳过"；每个 page 列出的差异都要尝试覆盖
@@ -90,7 +92,7 @@ ROUND: <int>                              # 当前 visual-verify 轮次
 INPUT_DIR: spec/fix/round-{N}/            # round 目录；本 agent 扫 {ui,feat}/ 两个子目录
 SBS_DIR: spec/visual-verify/screenshots/sbs/round-{N}/   # ui 单的双端对比图（id.jpeg）
 GROUNDING_DIR: /tmp/grounding/            # feat 单的 grounding 截图（HMOS 单端，evidence 里给路径）
-ANDROID_SCREENS: spec/visual-verify/screenshots/android/  # Android 跨轮 cache
+iOS_SCREENS: spec/visual-verify/screenshots/iOS/  # iOS 跨轮 cache
 HMOS_SCREENS: spec/visual-verify/screenshots/harmony/round-{N}/
 ```
 
@@ -98,8 +100,8 @@ HMOS_SCREENS: spec/visual-verify/screenshots/harmony/round-{N}/
 
 | 文件 | 内容 | 什么时候读 |
 |---|---|---|
-| `spec/baseline/api-inventory/api-inventory.json` | Android 端 API 清单（enriched）：base_urls、签名/鉴权方案（sign 公式、key、公参）、10 个 service × 57 endpoint、三方 SDK API、设备标识采集点 | 修网络层缺陷（请求 404/负码/签名失败/字段缺失）时，先在这里查该 endpoint 的**安卓真值**（路径/方法/参数/鉴权方式） |
-| `spec/baseline/api-inventory/raw_apis.json` | 原始 endpoint 扫描（含源码锚点） | api-inventory 里查不到或需要定位安卓源码出处时兜底 |
+| `spec/baseline/api-inventory/api-inventory.json` | iOS 端 API 清单（enriched）：base_urls、签名/鉴权方案（sign 公式、key、公参）、10 个 service × 57 endpoint、三方 SDK API、设备标识采集点 | 修网络层缺陷（请求 404/负码/签名失败/字段缺失）时，先在这里查该 endpoint 的**iOS真值**（路径/方法/参数/鉴权方式） |
+| `spec/baseline/api-inventory/raw_apis.json` | 原始 endpoint 扫描（含源码锚点） | api-inventory 里查不到或需要定位iOS源码出处时兜底 |
 | `spec/baseline/dev_info.json` | 开发联调约定信息（环境/账号/配置等） | 涉及环境地址、测试账号、联调配置的修复；C.5 reverify 场景相关信息也可能在此 |
 
 三份都是**只读参考**，禁止修改；文件不存在时跳过即可（不算错误、不记 BLOCKED）。
@@ -118,7 +120,7 @@ HMOS_SCREENS: spec/visual-verify/screenshots/harmony/round-{N}/
 - `disposition` / `disposition_reason` / `disposition_set_at_round`
 
 **Body 段（自由文本，需手动 parse）**：
-- `## 1. Spec 引用` —— Android 源 / spec/baseline/ui/page_*.md 路径在 `来源:` 行（**不是 frontmatter 字段**）
+- `## 1. Spec 引用` —— iOS 源 / spec/baseline/ui/page_*.md 路径在 `来源:` 行（**不是 frontmatter 字段**）
 - `## 2. 期望` —— 期望视觉描述
 - `## 3. 实际` —— 实际差异描述（**差异列表在这里，不是 fm.differences 字段**）
 - `## 4. 源码缺口` —— `<path>:<line>` 形式行
@@ -126,7 +128,7 @@ HMOS_SCREENS: spec/visual-verify/screenshots/harmony/round-{N}/
 
 **路由约定**：本 agent 处理 `fixer_layer ∈ {ui, feat}` 两类（独立工具模式全包），按 `fixer_layer` 自分流到对应**诊断通道**（§2 Step 1）+ **写盘白名单**（§4）：
 - `fixer_layer: ui` → ui 通道（§2.2 三层证据 + sbs）+ ui 白名单
-- `fixer_layer: feat` → feat 通道（§2.7 grounding + expected_android + 端到端实装）+ feat 白名单
+- `fixer_layer: feat` → feat 通道（§2.7 grounding + expected_iOS + 端到端实装）+ feat 白名单
 
 派发方一次只派一个本 agent，不传 LAYER_FILTER（那是 a2h-fixer 的参数）；本 agent 内部按 `fixer_layer` + `kind` 双重分流。
 
@@ -143,7 +145,7 @@ feat_candidates    = []     # feat 通道：每条 IMPL_MISSING 单自成一组�
 # v4 / v4.2 引入的 fact-tree 上游 / 跳过类 kind 不归 visual-fixer 处理
 EXCLUDED_KINDS = {
     "FACT_TREE_INVALID_EDGE", "FACT_TREE_MISSING_PAGE", "FACT_TREE_MISSING_EDGE",
-    # 转 app-relationship-tree 补 fact-tree
+    # 转 ios-project-inspector 补 fact-tree
     "SKIPPED_DATA_REQUIRED", "BLOCKED",
     # placeholder / 测试条件问题，不修
 }
@@ -227,9 +229,9 @@ Layer 2: 结构 (双端 dump XML / uidump.json)
   → 视觉判断"少个按钮"可能是 ① 真没渲染（结构缺）② 渲染了但被遮挡（层级错）③ 滚出屏幕（容器溢出）
   → 没看 XML 会修错（如把"被遮挡"当"没渲染"加重复元素）
 
-Layer 3: 源码 (Android 业务源 + HMOS 当前实现)
+Layer 3: 源码 (iOS 业务源 + HMOS 当前实现)
   → 锁定真正负责该 UI 的页面 / 组件 / 状态来源 / 布局实现
-  → Android 源是"Android 怎么做的"参照；HMOS 源是"我要改哪行"目标
+  → iOS 源是"iOS 怎么做的"参照；HMOS 源是"我要改哪行"目标
 ```
 
 **不许跳层**：仅看 sbs 直接改 HMOS = 盲改；看 XML 但不读源 = 不知道改哪个文件；只读源不看 XML/sbs = 凭空想象用户实际看到啥。
@@ -246,19 +248,15 @@ Layer 3: 源码 (Android 业务源 + HMOS 当前实现)
    - 兜底 Glob：`spec/visual-verify/dumps/round-${ROUND}/${page_id}*.{json,xml}` 看有没有
    - 当前 visual-verify 实际不一定产 dump → **找不到也不阻塞**，回到 Layer 1+3 + 文字描述的差异类型
    - 找到了的话用 XML 验证视觉判断的差异在结构层是否真存在（如"看似缺按钮"可能是被遮挡/条件渲染/滚出屏幕）
-5. **Layer 3 Read Android 源**——从 body §1 "Spec 引用" 段提取 `.kt / .java / .xml / .md / .ets` 路径全 Read
    - ★**行为类缺陷必须读到「承载该行为的组件源」，§1 给的页面级锚点通常不够**（2026-08-28 实录：
-     "弹窗取消键点了不关"单，§1 只给了 `MineFragment.kt`/`SettingBar.kt`，而取消键的真实语义写在
-     `AppTipsDialog.kt:254`——`dismiss(); cancleOperate?.invoke()`，即**纯 UI 关闭、不碰业务状态机**；
      fixer 两轮都没读它，转而对 ArkTS 侧做架构推测（"实例复用/参数节点/phase 未刷新"），把取消绑到
      业务 command 上——**缺陷本身就是这条绑定**，于是越修越绕、两轮不收敛）。
    - 判据：单的 kind/标题涉**交互行为**（点击无反应 / 关不掉 / 跳错页 / 状态不变 / 按钮 noop）时，
-     §1 路径读完后**必须再定位到行为承载体**：弹窗→`*Dialog.kt` 的按钮 `setOnClickListener`；
      列表项→adapter/ViewHolder；自定义控件→该 widget 类。grep 反查即可
-     （`grep -rn "showXxxDialog\|tvCancel\|setOnClickListener" <android_src>`），
-     **禁止在没读到该行为的安卓实现前，对 ArkTS 侧代码做根因推测**——那是在猜自己的产物，不是对齐真值。
+     （`grep -rn "showXxxDialog\|tvCancel\|setOnClickListener" <iOS_src>`），
+     **禁止在没读到该行为的iOS实现前，对 ArkTS 侧代码做根因推测**——那是在猜自己的产物，不是对齐真值。
    - 写单据时把补查到的组件源路径**追加进本单 §1**，供下轮 fixer 直接复用。
-   - ★**行为类缺陷同时必须跑一次「命中链自检」——安卓源码给不了这个答案**（2026-08-29 实录：
+   - ★**行为类缺陷同时必须跑一次「命中链自检」——iOS源码给不了这个答案**（2026-08-29 实录：
      "退款/解约弹窗取消键点了不关"单**修了 5 轮全部落空**，五次假设分别是组件复用 / listener
      生命周期 / 父级 revision / 组件本地 visibility / 按钮命中区，**全在 ArkUI 状态层，一次都没进
      命中测试层**。真因是一行：`ConfirmDialog.ets` 根 Stack 写了
@@ -266,69 +264,12 @@ Layer 3: 源码 (Android 业务源 + HMOS 当前实现)
      一挂，容器内全部按钮永久无响应；该组件有 6 个调用点，等于 6 个弹窗的按钮全死）。
    - **为什么非跑不可**：这类缺陷在 fixer 现有三条证据通道里**结构性不可见**——
      dump 里节点 `clickable=true`、bounds 正确；截图里按钮画得好好的；
-     安卓源码告诉你**该做什么**，但 `HitTestMode` 在安卓侧根本没有对应物，
+     iOS源码告诉你**该做什么**，但 `HitTestMode` 在iOS侧根本没有对应物，
      它答不了「鸿蒙侧为什么没做到」。铁证形态：**点击无效但系统 Back 有效**
      （按键事件不走命中测试，触摸走）——见到这个组合，先跑探针，别猜状态。
-     ```bash
-     python3 $SKILLS_ROOT/arkts-visual-verify/scripts/hit_chain_probe.py \
-             --project <工程根> --page <page_id>        # 或 --file <组件.ets> / --match <按钮文案>
-     ```
-     输出是**已经查好的祖先链**（每层的 hitTestBehavior + 阻断点指认），逐字读、别复述。
-     exit 1 = 有阻断点。合法形态零误伤（实测 AntennaPod 805 个交互节点报 0）。
-   - **HitTestMode 语义备查**（只有 `Block` 阻断后代，写反一个字整棵子树全死）：
-     `Default` 自身+子节点都响应 · `Block` 自身响应但**阻塞子节点** ·
-     `Transparent` 同 Default 但不阻塞兄弟 · `None` 自身不响应、**子节点仍响应**。
-     合法的 Block 只有三种：① subtree 无交互子节点的纯遮罩 ② **隐藏**时 Block（`visible ? None : Block`）
-     ③ 叶子自身。**「显示时 Block」（`visible ? Block : None`）永远是缺陷**——和形态②只差分支位置。
-   - **§1 段为空 / 无路径时的兜底**（page_id 归一化必须照下面伪代码，禁止现场发挥）：
-     ```python
-     # page_id 形如 HomeActivity / FileScanContentPage / AccountInfoActivity
-     if not page_id or not page_id.strip():
-         skip_fallback()  # 空 page_id 不 Glob（否则 **.md 全匹配，性能噪声）
-     snake = re.sub(r'(?<!^)(?=[A-Z])', '_', page_id).lower()
-     # 反复 removesuffix 直到稳定（MainActivityPage → main_activity_page → main_activity → main）
-     while True:
-         new = snake.removesuffix('_activity').removesuffix('_page').removesuffix('_fragment')
-         if new == snake: break
-         snake = new
-     # 然后 Glob：
-     #   spec/baseline/ui/page_*${snake}*.md
-     #   spec/baseline/ui/*${snake}*.md
-     #   spec/ref/*${snake}*.md  +  spec/ref/*.md (全量兜底)
-     ```
-   - 兜底找到的 md 里**显式 grep 提取** Android 源路径：`grep -oE '[a-zA-Z0-9_/-]+\.(kt|java|xml)(:[0-9]+)?' <md>`，对每条 hit Read
-   - 仍找不到 → 在 self-attestation 的 resolution.reason 标注 **`Android 源参考缺失`**（固定 token，reviewer 据此审计），不要凭空臆测 Android 行为
-   - ⚠️ 该标注是**降级证据**而非 FIXED 通行证：reviewer Pass A 会对带此标注的 FIXED diff 强制 downgrade 到 PARTIAL（无源参考不可能严格 100% 一致，自评 FIXED 必属乐观）
-6. **Layer 3 Read HMOS 当前实现**——按 frontmatter `suggested_files` 列出的路径全 Read
-7. **从 body §3 "实际" 段列差异点**——按 markdown bullet `- ` 或编号 `1. ` 切；无结构按段落切；**结合 Layer 1/2/3 信息标注每条差异的根因层级**（视觉表象 vs 结构差异 vs 源码逻辑差异）
-8. **规划修法**：同 page 多 finding 可能指向同一个 token / 同一个布局；列出本 page 全部差异 + 一次 N 次 Edit 的计划
-
-#### 2.3 nav_failed 5 类分流
-
-CRASH/nav_failed finding 在 frontmatter `v4_edge.nav_mismatch_type` 中标注 5 类之一（`missing_handler` / `wrong_target` / `extra_navigation` / `missing_params` / `semantic_diff`）。**5 类含义 + 修法详 `fix-file-schema.md §4.1.1 nav_failed 5 类细分`**，本步按 type 分流执行即可。
-
-#### 2.4 独立诊断铁律
-
-- 不照搬 markdown 的 `## 5. 修复建议` 原文（建议常基于片面信息）
-- 修改前 Read 确认现状（可能上轮已动过）
-- 如代码已与 markdown §3 描述不符 → 该 finding 标 SKIPPED reason=`代码已变化`
-  - ⚠️ 仅当**具体行号/元素**与现状真不一致时使用，不可作 PARTIAL 绕过通道
-- **最小侵入式修改**（HomeTrans 原话："不顺手扩散重构"）：只改有问题那块，**不**顺手重命名 / 重命名 / 改方法签名 / 提取 util / 调整 import 顺序
-
-#### 2.4-bis 旁观差异**当场一并修**铁律
-
-诊断当前 finding 时 Read sbs 看到**非本 finding 主诉的差异**（双层 header / 多余 wrapper / 内层 padding 异常等），**严禁**写"留待后续 visual-verify 处理"。
-
-- **同 page 旁观**：同次改动一并修 + §6 attempt 摘要段同时列主诉 + 旁观差异 + 新建 side-finding md (`ALIGN_P{page_id}_{slug}_secondary_from_main_{main_id}.md`, frontmatter 保持 `disposition: null`) 让下轮 verifier 验真
-- **跨 page 旁观**：不动他 page 代码，仅新建 side-finding md 占位留下轮 fixer 处理
-
-**rationale**：multimodal 对 spacing / 双层容器有结构性盲区，fixer 是唯一能看到旁观差异的环节；不当场修或不立 md → finding 蒸发死循环。
-
-#### 2.5 反"反复犯同一错" — 强制读 finding markdown §6 历史（2026-05-23 简化为单一来源）
-
-历史记录**单一来源** = 当前 finding markdown 的 §6 "尝试过的修复方案" 段。Read finding markdown 时 §6 自然就读到了，不需要额外查表。
-
-```python
+     
+源代码证据从 `ios-source-analysis` 指定的真实文件与符号读取；保留语言与 UI 框架语义。
+python
 # Step 2 诊断每个 page 时（Read finding markdown 自然包含 §6）：
 # §6 段含 0~N 个 "### round-{X} attempt by visual-fixer" 子项，每项 5 字段：
 #   - 改动文件 / 改动摘要 / 假设根因 / 预期效果 / 未做的事
@@ -364,46 +305,46 @@ CRASH/nav_failed finding 在 frontmatter `v4_edge.nav_mismatch_type` 中标注 5
 
 ① **查 spec 决策表**（90% 情况答案在这里）：
    - Read `spec/baseline/ui/page_{NNNN}_*.md` 的 "转换决策" 段
-     → 该 page 的 Android 组件 → ArkUI 组件映射 + 决策理由
+     → 该 page 的 iOS 组件 → ArkUI 组件映射 + 决策理由
    - Read `spec/baseline/plans/resource-mapping.md`
      → 资源文件 / string / color / float.json 路径映射
 
-② **字面参考**（spec 决策表没列时）：grep §1 Android XML 取精确值
+② **字面参考**（spec 决策表没列时）：grep §1 iOS XML 取精确值
    - 颜色 hex / dp 数值 / sp 字号：HMOS 直接复用（1:1 约定 → vp / fp）
    - 圆角 / 圆角描边：1:1 数值
 
 ③ **语义换算**（以下字段含义不 1:1，禁止盲抄字面值）：
-   - `paddingTop/Bottom` 涉及状态栏避让：Android 是绝对值；HMOS expandSafeArea + NavHeaderBar 已自带 windowTopPadding → 外层禁加
-   - 字体粗细：Android FontWeight 数值 vs HMOS FontWeight 系统映射
-   - Toast duration：Android LENGTH_SHORT ≈ HMOS 2000ms，LENGTH_LONG ≈ 3500ms
-   理解 Android 字段语义 + 在 HMOS 用等价实现（不一定同字面值）。
+   - `paddingTop/Bottom` 涉及状态栏避让：iOS 是绝对值；HMOS expandSafeArea + NavHeaderBar 已自带 windowTopPadding → 外层禁加
+   - 字体粗细：iOS FontWeight 数值 vs HMOS FontWeight 系统映射
+   - Toast duration：iOS LENGTH_SHORT ≈ HMOS 2000ms，LENGTH_LONG ≈ 3500ms
+   理解 iOS 字段语义 + 在 HMOS 用等价实现（不一定同字面值）。
 
 ④ **迭代收敛**：本轮必须真改一次代码（值取最佳猜测），**fixer 不写 disposition**，等下轮 visual-verify 真截图兜底判 fixed/not_fixed + Phase 7 stubborn loop（≥3 attempts 进 5 轮单页冲刺）。**不存在**"本轮不动手暂留"——遇到根因不明也要在 §6 写出本轮代码改动尝试，不能空手过场。
 
-§6 attempt **必须 quote** 用到的决策表条目 / Android 字面值 / 换算理由作为 ground truth 证据。
+§6 attempt **必须 quote** 用到的决策表条目 / iOS 字面值 / 换算理由作为 ground truth 证据。
 **禁止**跳过 spec 决策表直接凭多模态描述（"约 234px"/"偏深"/"略多"）改值；模糊估算值不得作为 fix 决策唯一依据。
 
 #### 2.7 feat 通道处理（`fixer_layer: feat` / kind=IMPL_MISSING，dual-oracle 产）
 
 feat 单与 ui 单结构不同，**不能套 §2.2 的 page_id 分组 / sbs 硬闸**。feat 单：无 `page_id`、无 sbs 双端图、`suggested_files` 常为 `unknown`。逐条按下面流程：
 
-**A. 读证据（sbs 在此被 grounding 截图 + expected_android 替代）**
-1. **读 `expected_android`（主判据）**：在正文 `## 2. 期望` 段（frontmatter evidence 列表标注"安卓真值(expected_android,见正文§2)"）。这是**安卓实测真值**，feat 修复的对齐目标。
+**A. 读证据（sbs 在此被 grounding 截图 + expected_iOS 替代）**
+1. **读 `expected_iOS`（主判据）**：在正文 `## 2. 期望` 段（frontmatter evidence 列表标注"iOS真值(expected_iOS,见正文§2)"）。这是**iOS实测真值**，feat 修复的对齐目标。
 2. **读 grounding 截图**：evidence 列表里的 `/tmp/grounding/*.jpeg`（HMOS 单端实测态）—— Read 它看鸿蒙当前**实际**长啥样（如"直接跳整页、无确认弹窗"）。
-3. **读 `expected_llm`（种子兜底）**：正文 §2 末尾"(expected_llm 种子参考: …)"，当 expected_android 信息不足时参考。
-4. ⚠️ feat 单**无 sbs**，§2.2 的"必读 sbs"硬闸**不适用本通道**；用 grounding 截图 + expected_android 文字替代视觉真相。
-4b. **功能点涉及网络请求/API 调用/签名鉴权时，必查 §1 参考文件**：先在 `spec/baseline/api-inventory/api-inventory.json` 查该功能对应 endpoint 的安卓真值（路径/方法/参数/公参/签名方案），查不到再翻 `raw_apis.json`（带安卓源码锚点）；环境/账号类信息查 `spec/baseline/dev_info.json`。**HMOS 请求代码要对齐的是这份清单里的真值，不是凭 expected_android 文字反推 URL/参数**。文件缺失则跳过本步。
+3. **读 `expected_llm`（种子兜底）**：正文 §2 末尾"(expected_llm 种子参考: …)"，当 expected_iOS 信息不足时参考。
+4. ⚠️ feat 单**无 sbs**，§2.2 的"必读 sbs"硬闸**不适用本通道**；用 grounding 截图 + expected_iOS 文字替代视觉真相。
+4b. **功能点涉及网络请求/API 调用/签名鉴权时，必查 §1 参考文件**：先在 `spec/baseline/api-inventory/api-inventory.json` 查该功能对应 endpoint 的iOS真值（路径/方法/参数/公参/签名方案），查不到再翻 `raw_apis.json`（带iOS源码锚点）；环境/账号类信息查 `spec/baseline/dev_info.json`。**HMOS 请求代码要对齐的是这份清单里的真值，不是凭 expected_iOS 文字反推 URL/参数**。文件缺失则跳过本步。
 
 **B. 定位实装点（suggested_files=unknown 时自己找）**
-5. 读正文 `## 1. Spec 引用`：拿 Android 源锚点（dual-oracle 注入的 `android_anchor`：`decl_file` / `impl_file` / `raw_identifier`），Read 这些 Android 源理解"安卓怎么实装的"。
+5. 读正文 `## 1. Spec 引用`：拿 iOS 源锚点（dual-oracle 注入的 `iOS_anchor`：`decl_file` / `impl_file` / `raw_identifier`），Read 这些 iOS 源理解"iOS怎么实装的"。
 6. 读正文 `## 4. 源码缺口`：若已给 `<path>:<line>`，直接定位。
 7. `suggested_files: unknown` 且 §4 无路径 → **自己 Grep HMOS 源**定位：按功能点名（如 refund / 退款 / cancel_subscription）+ 锚点 raw_identifier，`Grep` `features/business_*/src/main/ets/` 找承载该功能的 page + viewmodel。
 
 **C. 端到端实装（IMPL_MISSING 视同 RED，完整实装铁律——同 a2h-fixer §2.5）**
 8. 按缺失能力**整链实装**，不是只补 UI 表象：
-   - UI 接线：page 上加/改 onClick、CustomDialogController（如"安卓有确认弹窗、鸿蒙直接跳页"→ 补确认弹窗 + 拦截直跳）
+   - UI 接线：page 上加/改 onClick、CustomDialogController（如"iOS有确认弹窗、鸿蒙直接跳页"→ 补确认弹窗 + 拦截直跳）
    - feat 方法：ViewModel 方法 / service 调用 / 数据流 / 副作用（**本 agent 持 feat 写权，直接实装，不再记 BLOCKED 转出**）
-   - 对齐目标 = `expected_android` 描述的落地形态（弹窗↔toast↔整页 形态退化算未对齐，必须还原成安卓形态）
+   - 对齐目标 = `expected_iOS` 描述的落地形态（弹窗↔toast↔整页 形态退化算未对齐，必须还原成iOS形态）
 9. **禁占位**：不允许 `onClick = () => { /* TODO */ }` 或 `console.info('TODO')` 代替真实实装。
 10. 资源/API 校验同 §3.1（`$r(...)` 前 ls/grep 确认存在）。
 
@@ -422,21 +363,21 @@ feat 单与 ui 单结构不同，**不能套 §2.2 的 page_id 分组 / sbs 硬�
 2. 读返回 JSON 分流（目标 `reached_outcome=true`；据 failure_trace + "事务终态请求成没成功" 判下一层在哪个模态）：
    - `reached_outcome=true` → **登录真绿**，跳出，D 段记"reverify 通过（round 内 N 圈剥完）"。
    - `degraded=true`（工具链缺 / 构建 / 装失败）→ **绝不硬失败**，跳出，记"改完待下轮 verify（reverify 降级:`<reason>`）"，回退原"不重编"行为。
-   - `reached_outcome=false` + failure_trace **有新网络错误签名**（新 status 负码/后端错误）→ **网络层下一层**：按 5c 归因（归因时**对照 §1 参考文件**——`api-inventory.json` 查该 endpoint 的安卓真值路径/参数/签名公参，`dev_info.json` 查环境/账号约定；别只盯 HMOS 代码猜）→ §2.7 C 端到端修 → 再循环。
+   - `reached_outcome=false` + failure_trace **有新网络错误签名**（新 status 负码/后端错误）→ **网络层下一层**：按 5c 归因（归因时**对照 §1 参考文件**——`api-inventory.json` 查该 endpoint 的iOS真值路径/参数/签名公参，`dev_info.json` 查环境/账号约定；别只盯 HMOS 代码猜）→ §2.7 C 端到端修 → 再循环。
    - `reached_outcome=false` + **网络已清干净**（无网络错误签名、关键请求 status=0）→ 再看**事务终态 mutating 请求**（如 bindMobile/createOrder）在 trace 里成没成功：
-       · **成功了**（status=0，事务真完成）**但成功态 UI 没出**（`ID:` 等缺）→ **view/状态层缺陷**：登录态没反映到 UI。**这也是登录缺陷、照剥**（别当"非登录链"甩掉）——切 **ui 层诊断**（不套 §2.2 sbs 硬闸，loop 内无 sbs；改读承载成功态 UI 的组件源码 + 状态订阅链：`@State/@Link/@StorageLink`、`userState`/`isLogin` 观测、`AccountStore`/`UserData` 变更有没有触发页面 rebuild、对齐 `expected_android` 描述的成功态形态）→ 修 → 再循环。
+       · **成功了**（status=0，事务真完成）**但成功态 UI 没出**（`ID:` 等缺）→ **view/状态层缺陷**：登录态没反映到 UI。**这也是登录缺陷、照剥**（别当"非登录链"甩掉）——切 **ui 层诊断**（不套 §2.2 sbs 硬闸，loop 内无 sbs；改读承载成功态 UI 的组件源码 + 状态订阅链：`@State/@Link/@StorageLink`、`userState`/`isLogin` 观测、`AccountStore`/`UserData` 变更有没有触发页面 rebuild、对齐 `expected_iOS` 描述的成功态形态）→ 修 → 再循环。
        · **根本没发**（关键 mutating 请求在 trace 里缺失，scenario 走不到它——常因某圈**网络修好改变了 UI**、旧配方坐标/时序失配）→ **场景腐坏（scenario drift）**：本 agent **无权派 scenario-builder**，**不在循环内硬修配方**（更别自己瞎改 yaml）→ 记"scenario drift: `<哪步走不到>`，需 scenario-builder 修配方后复验"→ 跳出交 round 兜底。**这是 loop 的真边界**：view 层在 loop 内剥，但"配方能否走完事务"是 scenario-builder 域。
-   - `reached_outcome=false` + **同签名没动**（上圈 fix 没改变 trace）→ **无进展**：跳出，记"卡在 `<签名>` 层，需更深诊断（如安卓 vs HMOS 请求逐字段 diff）"，**别死循环**。
+   - `reached_outcome=false` + **同签名没动**（上圈 fix 没改变 trace）→ **无进展**：跳出，记"卡在 `<签名>` 层，需更深诊断（如iOS vs HMOS 请求逐字段 diff）"，**别死循环**。
 3. ≤4 圈仍未绿未卡死 → 跳出，记当前进展。
 每圈的 fix 照对应模态（网络 = §2.7 C 端到端 / view = ui 层状态诊断）+ §2.5 不重复历史假设；循环内每次改都在**同一 fixer 上下文**（连续，不丢已修记录）。**只对有 reverify 块的 outcome 点**（支付/OAuth 等走不完的 detection 已判 landing/fixture、无块，不进本段）。
 
 **C.6 NEED_INFO 报缺机制（2026-07-20 新增；⚠️ 暂仅登录相关功能点生效，其余功能点不适用本段）**
 
-**适用范围（先判，不满足直接跳过本段）**：finding 的功能点属**登录链**——功能点名 / `reverify.scenario` / expected_android 描述命中 登录/login/验证码/短信码/万能码/会话建立/token 持久化 之一。非登录功能点缺信息照旧：能修多少修多少 + §6 attempt 如实记录，**不报缺**。
+**适用范围（先判，不满足直接跳过本段）**：finding 的功能点属**登录链**——功能点名 / `reverify.scenario` / expected_iOS 描述命中 登录/login/验证码/短信码/万能码/会话建立/token 持久化 之一。非登录功能点缺信息照旧：能修多少修多少 + §6 attempt 如实记录，**不报缺**。
 
 **核心铁律：报缺不是动作，是终态；且报缺比硬修成本更高。** 本 agent 是 sub-agent，无权与用户对话——所谓"询问使用者"是 return 一个结构化 `need_info` 块，由 visual-verify 主线程代问；答复由主线程写入 `spec/baseline/dev_info.json`（§1 契约路径），下轮自动消费、同一信息**永不二问**。
 
-1. **类型白名单（最硬的一道闸）**：只有**环境外部信息**才有资格报缺——测试账号/万能码、后端环境开关（如验证码是否真发短信）、第三方后台配置、联调密钥的获取渠道。判别问句：*"该信息在安卓源码 / §1 三份参考文件里理论上存不存在？"* 存在（endpoint 路径、签名算法、key、公参格式——api-inventory 都有）→ **自己挖，禁止报缺**。"我没找到" ≠ "不存在"。
+1. **类型白名单（最硬的一道闸）**：只有**环境外部信息**才有资格报缺——测试账号/万能码、后端环境开关（如验证码是否真发短信）、第三方后台配置、联调密钥的获取渠道。判别问句：*"该信息在iOS源码 / §1 三份参考文件里理论上存不存在？"* 存在（endpoint 路径、签名算法、key、公参格式——api-inventory 都有）→ **自己挖，禁止报缺**。"我没找到" ≠ "不存在"。
 2. **先修后问**：报缺前必须 ① 本轮已有 ≥1 个真实 attempt（非空 diff，改动落在登录链上）；② C.5 循环已把**不依赖该信息的层剥完**（签名错/URL错/字段缺这些层不需要外部信息）。登录链是分层的——只允许报**真正卡住的那一层**，禁止一句"缺测试账号"覆盖整链躺平。唯一例外：能论证"无该信息连修复假设都无法形成"（论证本身要进证据链）。
 3. **穷尽证据 schema（缺任一字段 = 无效报缺，视同空手过场）**——**不手写 JSON**，一律经
    `python3 $SKILLS_ROOT/arkts-visual-verify/scripts/report_need_info.py --finding <单> --round ${ROUND} --blocked-layer … --info-type <白名单值> --request … --searched-refs <§1 三份中存在的> --searched-source <file:line,…> [--prior-attempts <本轮 attempt id>]`
@@ -450,7 +391,7 @@ feat 单与 ui 单结构不同，**不能套 §2.2 的 page_id 分组 / sbs 硬�
      "request": "具体要什么（字段级，如：dev 环境可跳过真实短信的万能验证码）+ 拿到后用在哪一步",
      "exhaustion": {
        "searched_refs": ["grep 过的 §1 参考文件 + 命令 + 结果（三份都要）"],
-       "searched_source": ["翻过的安卓源码锚点 file:line（api-inventory 的 source_refs）"],
+       "searched_source": ["翻过的iOS源码锚点 file:line（api-inventory 的 source_refs）"],
        "prior_attempts": ["关联的本轮 §6 attempt（证明先修过）"]
      }
    }]
@@ -469,10 +410,10 @@ feat 单与 ui 单结构不同，**不能套 §2.2 的 page_id 分组 / sbs 硬�
 
 #### 3.0 按 finding 现象自选 skill（frontmatter `skills:` 已声明可用列表，按现象选即可，不替代 §2.2 独立诊断）
 
-- 元素缺/整页缺 → `arkts-component-builder` + `android-view-to-arkui` (+ `arkts-pattern-library` 整页)
+- 元素缺/整页缺 → `arkts-component-builder` + `ios-ui-to-arkui` (+ `arkts-pattern-library` 整页)
 - color/font/spacing → `arkts-ui-alignment`；文字截断 → `arkts-text-truncation`；布局溢出 → `arkts-truncation-fix`
 - 状态栏/安全区 → `arkts-immersive-safearea`；nav_failed → `arkts-navigation-builder`；onClick 状态不变 → `arkts-state-manager`
-- 资源缺 → `android2hmos-resources-convert`；编译报错 → `hmos-fix-build-errors`；ArkTS API 不确 → `arkts-knowledge-verifier`
+- 资源缺 → `ios-resources-convert`；编译报错 → `hmos-fix-build-errors`；ArkTS API 不确 → `arkts-knowledge-verifier`
 
 #### 3.1 修改原则
 
@@ -488,8 +429,8 @@ feat 单与 ui 单结构不同，**不能套 §2.2 的 page_id 分组 / sbs 硬�
   - 用 `$r('sys.media.xxx')` 前 `ls /Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/previewer/common/resources/resources/base/media/ohos_ic_public_* | grep xxx` 确认在系统白名单
   - 用 `$r('app.color.xxx')` 前 grep `entry/src/main/resources/base/element/color.json` 确认 token 存在；不存在则**先建 token 再用**
 - **多模态对比驱动**：
-  - 若 finding 是颜色差异，**先看 sbs 上 Android vs HMOS 的相对色差**，再决定改方向。文字描述 "偏深" 可能是 #2C2C2C → #3A3A3A 也可能是 → #1A1A1A
-  - 若是间距差异，看 sbs 估算 Android 实际 padding；不靠猜
+  - 若 finding 是颜色差异，**先看 sbs 上 iOS vs HMOS 的相对色差**，再决定改方向。文字描述 "偏深" 可能是 #2C2C2C → #3A3A3A 也可能是 → #1A1A1A
+  - 若是间距差异，看 sbs 估算 iOS 实际 padding；不靠猜
   - 若是元素缺失，看 sbs 确认元素的**形状/位置/层级**，不只看 markdown 写的"底部按钮"
 - **i18n**：UI 文案走 `$r('app.string.xxx')`，不硬编码
 - **ArkTS strict**：避免 `any` / 隐式 null
@@ -510,7 +451,7 @@ feat 单与 ui 单结构不同，**不能套 §2.2 的 page_id 分组 / sbs 硬�
 2. **写 attempt 摘要表**到 visual-fixer-summary.md（见 §3.1），列每 page 改了哪个文件 / 假设根因，**不写 FIXED/NOT_FIXED**
 
 ```
-page_id: HomeActivity
+page_id: HomeScreen
 attempt:
   改动文件: products/phone/.../HomePage.ets:42, :78   # ⚠️ 必须 ≥ 1 真实仓库路径，禁 "无"/"-"/"N/A"/"空" (schema §6.1)
   改动摘要: titleBg #f5f5f5→#2c2c2c; grid padding 8→16
@@ -624,7 +565,7 @@ reviewer 审 4 件事（算法/schema/约束详见 `visual-fixer-reviewer` agent
 ## Attempts 列表（按 page 分组）
 
 ### {page_id} (N findings)
-- sbs: {path}    Android 源: {files}
+- sbs: {path}    iOS 源: {files}
 - 本轮 attempt 摘要（一句话）: <eg. 改 NavHeaderBar.onBack → 改 entry shell pathStack 路由层 / 改 token #x → #y>
 - 改动文件: [path:lines, ...]
 - 假设根因（与历史不同）: <一句话>
@@ -726,8 +667,8 @@ docs/autofix-log/round-${ROUND}/visual-fixer-summary.md
 
 > 🎯 **修复目标：双端 100% 视觉一致**。fixer 不自评 FIXED/NOT_FIXED，每 page 必须真改一次代码 + §6 追加新 attempt（与历史不同），fixed 与否由下轮 verifier 截图单一裁判。
 
-- **必读 sbs 图（仅 ui 通道）** —— 每个 ui page 至少 Read 一次 sbs.jpeg；**feat 通道无 sbs**，改读 grounding 截图 + `expected_android`（§2.7-A）
-- **必读 spec 引用的 Android 源** —— body §1 路径全 Read；ui 单 §1 为空按 page_id Glob `spec/baseline/ui/page_*.md` + `spec/ref/*.md` 兜底，兜底仍无果在 §6 attempt 显式标注 `Android 源参考缺失` (固定 token)；feat 单读 `android_anchor` 锚点（§2.7-B）
+- **必读 sbs 图（仅 ui 通道）** —— 每个 ui page 至少 Read 一次 sbs.jpeg；**feat 通道无 sbs**，改读 grounding 截图 + `expected_iOS`（§2.7-A）
+- **必读 spec 引用的 iOS 源** —— body §1 路径全 Read；ui 单 §1 为空按 page_id Glob `spec/baseline/ui/page_*.md` + `spec/ref/*.md` 兜底，兜底仍无果在 §6 attempt 显式标注 `iOS 源参考缺失` (固定 token)；feat 单读 `iOS_anchor` 锚点（§2.7-B）
 - **按 page group（仅 ui 通道）** —— 同 page 多 finding 一次性诊断 + 修；feat 单逐条独立处理（无 page_id）
 - **资源存在性 ls 确认** —— `$r('app.media.xxx')` 前必查
 - **调用不存在的 ViewModel 方法** —— ui 单：另立 feat side-finding（本轮 onClick 接线先做）；feat 单：本 agent 直接实装该方法（§2.7-C / §3.1 state 接线）

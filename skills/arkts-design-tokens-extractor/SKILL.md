@@ -1,6 +1,6 @@
 ---
 name: arkts-design-tokens-extractor
-description: ArkTS / HarmonyOS 工程的「魔鬼数字」量化与资源化工具。扫描 *.ets 中所有 `.width(<int>) / .height(<int>) / .fontSize(<int>) / .padding/margin({...:<int>}) / .borderRadius(<int>) / '#RRGGBB' / 'rgba(...)' / linearGradient hex` 字面量，按值 × 出现频次聚合，自动建议归并到 `DesignTokens.ets` / `resources/base/element/float.json` / `color.json`，并产出 codemod 补丁把字面量替换为 `$r('app.float.dp_xx')` / `DesignTokens.xx` 引用。当用户说"魔鬼数字"、"硬编码"、"设计系统"、"DesignTokens"、"资源化"、"字面量去重"、"代码里全是数字"、"颜色没归类"时触发。即使用户只说"清一下硬编码"或"扫一下尺寸",也应触发。
+description: "ArkTS / HarmonyOS 工程的「魔鬼数字」量化与资源化工具。扫描 *.ets 中所有 `.width(＜int＞) / .height(＜int＞) / .fontSize(＜int＞) / .padding/margin({...:＜int＞}) / .borderRadius(＜int＞) / '#RRGGBB' / 'rgba(...)' / linearGradient hex` 字面量，按值 × 出现频次聚合，自动建议归并到 `DesignTokens.ets` / `resources/base/element/float.json` / `color.json`，并产出 codemod 补丁把字面量替换为 `$r('app.float.dp_xx')` / `DesignTokens.xx` 引用。当用户说\"魔鬼数字\"、\"硬编码\"、\"设计系统\"、\"DesignTokens\"、\"资源化\"、\"字面量去重\"、\"代码里全是数字\"、\"颜色没归类\"时触发。即使用户只说\"清一下硬编码\"或\"扫一下尺寸\",也应触发。"
 metadata:
   type: domain
   domain: engineering
@@ -217,16 +217,16 @@ borderRadius 50 + 在 Button 上下文 → Button.radius.pill
 
 | 模式 | 触发方 | 输入 | 输出 |
 |---|---|---|---|
-| **轻量扫描**（`--scope <file>`） | `a2h-execute` Stage 1 每页生成后（`a2h-activity-converter` agent 内部固定挂钩）| 单页 ets 文件 | 仅本页字面量增量，**追加**到 `spec/magic-numbers-report.md`（不覆盖、不阻断）|
+| **轻量扫描**（`--scope <file>`） | `a2h-execute` Stage 1 每页生成后（`a2h-ios-converter` agent 内部固定挂钩）| 单页 ets 文件 | 仅本页字面量增量，**追加**到 `spec/magic-numbers-report.md`（不覆盖、不阻断）|
 | **全量 audit**（默认） | `a2h-verify` Phase 7 CHECK-MAGIC + 用户主动触发 | `entry/src/main/ets/**/*.ets` 全量 | 完整 4 项产物（见 §3）|
 
-> ⚠️ **a2h 管线豁免（2026-08-25）**：在 a2h-spec/plan/execute 主管线的工程上，本 skill 的 converter 内部挂钩**停用**——主题层已由 resolve_theme.py → theme_brief.py → theme_gate.py 机械链承载，且本 skill 的 `DesignTokens.ets` 归并产物与主管线「一律 `$r` 资源引用」纪律互斥（会被 theme_gate 判 UNBOUND）。管线工程上仅允许用户显式调用，且 `--apply` 只走 `float.json` / `color.json` 路线、不建 `DesignTokens.ets`。
+> ⚠️ **a2h 管线豁免（2026-08-25）**：在 a2h-spec/plan/execute 主管线的工程上，本 skill 的 converter 内部挂钩**停用**——主题层已由 ios-ui-analyzer / ios-resources-convert → 已审阅 resolved-theme.json → theme_brief.py → theme_gate.py 机械链承载，且本 skill 的 `DesignTokens.ets` 归并产物与主管线「一律 `$r` 资源引用」纪律互斥（会被 theme_gate 判 UNBOUND）。管线工程上仅允许用户显式调用，且 `--apply` 只走 `float.json` / `color.json` 路线、不建 `DesignTokens.ets`。
 
 ### 5.2 触发时机
 
 | 时机 | 模式 |
 |---|---|
-| `a2h-execute` Stage 1 每页 `a2h-activity-converter` agent 完成后 | **轻量扫描**（`--scope <该页> --threshold 3`） |
+| `a2h-execute` Stage 1 每页 `a2h-ios-converter` agent 完成后 | **轻量扫描**（`--scope <该页> --threshold 3`） |
 | `a2h-verify` 阶段 CHECK-MAGIC | **全量 audit**（结果计入 verify 通过条件） |
 | 用户说「清下硬编码」 / 「扫一下尺寸」 | 全量 audit + dry-run |
 | 用户说「跑 codemod」 / 「应用补丁」 | 全量 audit + `--apply` |

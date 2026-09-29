@@ -61,7 +61,7 @@ PNG_COUNT=$(find <root> -name '*.png' -path '*/resources/*' 2>/dev/null | wc -l)
 
 # R4.3: gif 必改
 GIF_COUNT=$(find <root> -name '*.gif' 2>/dev/null | wc -l)
-[ "$GIF_COUNT" -gt 0 ] && echo "P1: $GIF_COUNT 个 gif（必改 webp，对齐 Android）"
+[ "$GIF_COUNT" -gt 0 ] && echo "P1: $GIF_COUNT 个 gif（必改 webp，对齐 iOS）"
 
 # R4.4: 多色版同名图标（典型反模式）—— 命中 → P1 改单色 webp + colorFilter
 find <root> -name '*_blue.*' -o -name '*_red.*' -o -name '*_dark.*' -o -name '*_light.*' \
@@ -93,7 +93,7 @@ non_canonical_general_hints = {'app_theme','app_text_color','main_color','theme_
 
 ```bash
 COUNT=$(grep -rn 'FontWeight\.Bold' --include='*.ets' <root> 2>/dev/null | wc -l)
-[ "$COUNT" -gt 0 ] && echo "P2: 共 $COUNT 处 FontWeight.Bold（如系 Android 迁移代码，建议改 UI 给定 weight 数值）"
+[ "$COUNT" -gt 0 ] && echo "P2: 共 $COUNT 处 FontWeight.Bold（如系 iOS 迁移代码，建议改 UI 给定 weight 数值）"
 ```
 
 ## R5.3 页面左右间距（SHOULD）
@@ -235,9 +235,6 @@ class VFXCreateViewModel extends BaseViewModel {
 ## R6.1c-2 ViewModel 单例反模式（**MUST** — 2026-05 客户校准）
 
 ```bash
-# Page/Fragment-scope VM 不能写单例三件套
-grep -rnE 'private\s+static\s+instance.*(Page|Fragment)?ViewModel' --include='*.ets' <root>
-grep -rnE 'static\s+getInstance\(\)\s*:\s*\w+(Page|Fragment)?ViewModel' --include='*.ets' <root>
 grep -rnE 'static\s+clearInstance\(\)' --include='*.ets' <root> | grep -i ViewModel
 ```
 

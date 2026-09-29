@@ -1,6 +1,6 @@
 # photoAccessHelper 媒体查询指南
 
-> HarmonyOS 媒体库访问的完整使用模式，替代 Android 的 MediaStore + ContentProvider。
+> HarmonyOS 媒体库访问的完整使用模式，替代 iOS 的 MediaStore + ContentProvider。
 
 ---
 

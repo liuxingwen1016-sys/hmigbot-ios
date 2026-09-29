@@ -1,6 +1,6 @@
 # 系统设置跳转
 
-> 使用显式 Want + startAbility 跳转到系统设置页面，替代 Android 的 Settings.ACTION_APPLICATION_DETAILS_SETTINGS。
+> 使用显式 Want + startAbility 跳转到系统设置页面，替代 iOS 的 Settings.ACTION_APPLICATION_DETAILS_SETTINGS。
 
 ---
 
@@ -245,7 +245,6 @@ import { deviceInfo } from '@kit.BasicServicesKit'
 
 const bundleName = deviceInfo.brand === 'huawei' 
   ? 'com.huawei.settings' 
-  : 'com.android.settings'  // 其他设备
 ```
 
 ### 错误 2：忘记错误处理

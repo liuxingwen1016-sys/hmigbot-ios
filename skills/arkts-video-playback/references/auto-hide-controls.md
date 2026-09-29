@@ -65,9 +65,9 @@ struct VideoPlayerPage {
 
 ## 为什么 PAUSED 也要走定时器
 
-错误模式："暂停时强制显示控件，不隐藏"——和 Android `FullPlayerView` 对照不一致。
+错误模式："暂停时强制显示控件，不隐藏"——和 iOS `FullPlayerView` 对照不一致。
 
-Android 行为：暂停 3 秒后控件也会收起，用户再次点击屏幕才唤出。HMOS 实现要对齐。
+iOS 行为：暂停 3 秒后控件也会收起，用户再次点击屏幕才唤出。HMOS 实现要对齐。
 
 如果只在 PLAYING 触发隐藏，暂停状态下控件永远占着上下两条 → 视频被裁。用户报障"控件收不起来"。
 

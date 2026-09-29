@@ -14,7 +14,7 @@
 | 底部半模态面板（筛选/分享/评论） | `.bindSheet(...)` |
 | 全屏模态（详情/编辑流） | `.bindContentCover(...)` |
 
-> **层级维度（易漏）**：`@CustomDialog` / `openCustomDialog` / `showDialog` 默认是**全局级**，层级高于所有路由页——打开弹窗后再路由跳转，弹窗不会自动关闭且盖在新页之上。若迁移的 Android 弹窗是「打开后仍要跳新页、返回后弹窗还在」的页面级语义（Dialog / DialogFragment），见 §2c 页面级弹窗，别直接套 §2a/§2b。
+> **层级维度（易漏）**：`@CustomDialog` / `openCustomDialog` / `showDialog` 默认是**全局级**，层级高于所有路由页——打开弹窗后再路由跳转，弹窗不会自动关闭且盖在新页之上。若迁移的 iOS 弹窗是「打开后仍要跳新页、返回后弹窗还在」的页面级语义（须以实际 presenting host 与状态所有者为准），见 §2c 页面级弹窗，别直接套 §2a/§2b。
 
 ---
 
@@ -99,9 +99,9 @@ struct Page2 {
 }
 ```
 
-### 2c. 页面级弹窗（Android Dialog / DialogFragment 语义迁移）
+### 2c. 页面级弹窗（按 iOS 真实呈现层级迁移）
 
-- **症状**：Android `Dialog`/`DialogFragment` 是页面级的——弹窗打开后 `startActivity` 打开新页，新页天然盖住弹窗、弹窗随宿主销毁；返回后弹窗仍在。直接套 §2a/§2b（默认全局级）行为相反：弹窗层级高于所有路由页，跳转后**恒盖在新页之上**，且不主动 `close` 就不消失。
+- **源呈现层级**：读取 SwiftUI sheet/fullScreenCover 或 UIKit present 的实际宿主与生命周期，核对跳转新页后遮盖、dismiss 和返回状态；目标全局弹窗与页面级弹窗不能仅按外观互换。
 - **正解**：`openCustomDialog` 的 options 设 `levelMode: LevelMode.EMBEDDED` 启用页面级——弹窗节点挂到当前 Page 下；配 `levelUniqueId`（某 FrameNode 的 uniqueId）则挂到该节点所在 NavDestination 下。
 
 ```typescript

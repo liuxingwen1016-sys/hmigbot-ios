@@ -1,14 +1,6 @@
 ---
 name: arkts-ui-verifier
-description: '以 Android 源码为主要行为依据、UI Spec 为参考，为鸿蒙可见页面设计、生成并执行 ArkXTest UiTest，
-
-  以黑盒方式验证页面是否能沿真实用户路径到达，以及页面功能是否产生可观察的 UI 结果。
-
-  适用于“从 spec 生成 UI 测试”“验证页面功能/导航”“统计 UI 验收通过率”“运行 UI RED/GREEN 验证”。
-
-  不验证 Repository、Service 等纯逻辑单元行为；这类需求使用 arkts-ut-verifier。
-
-  '
+description: "以 iOS 源码为主要行为依据、UI Spec 为参考，为鸿蒙可见页面设计、生成并执行 ArkXTest UiTest， 以黑盒方式验证页面是否能沿真实用户路径到达，以及页面功能是否产生可观察的 UI 结果。 适用于“从 spec 生成 UI 测试”“验证页面功能/导航”“统计 UI 验收通过率”“运行 UI RED/GREEN 验证”。 不验证 Repository、Service 等纯逻辑单元行为；这类需求使用 arkts-ut-verifier。"
 metadata:
   type: domain
   domain: migration
@@ -24,7 +16,7 @@ metadata:
   - 功能验证
 ---
 
-<!-- codex-ui-dispatch:start -->
+
 > **Codex 子代理派发契约（必须遵守）**
 >
 > Skill 负责主线程编排，四个角色在独立的 `.codex/agents/*.toml` 中定义。
@@ -32,16 +24,16 @@ metadata:
 > 不读取/拼接角色 prompt 副本，不用通用 agent 替代；角色未加载则报告安装缺口。
 >
 > 每次只传本轮任务与输入：`SKILL_ROOT`（实际 skill 绝对目录）、`PROJECT_ROOT`、
-> `ANDROID_ROOT`、`PAGE_MAP`（持久化映射绝对路径）、`MAPPING_REVISION`、
+> `SOURCE_ROOT`、`PAGE_MAP`（持久化映射绝对路径）、`MAPPING_REVISION`、
 > `PAGE_SCOPE`、`EXPECTED_PAGES`、文件 ownership、PHASE/MODE/TEST_SCOPE/FIX_SCOPE、
 > ROUND、设备/冻结快照及检查点实值。agent 从 SKILL_ROOT 读 references，不递归编排；
 > 项目资料统一在 `spec/verify/ui/`：当前映射/设计在 plan/，报告为 ui-report.md；每轮 evidence/plan-snapshot/ 保存实际输入。
 > 可执行测试仍只写 ohosTest；不在验证资料目录维护第二份源码，失败定位区分当前 plan 与只读轮次快照。
-> Android 源码决定行为，UI Spec 为参考，鸿蒙现状决定 locator，普通 Dialog 归宿主页。
+> iOS 源码决定行为，UI Spec 为参考，鸿蒙现状决定 locator，普通 Dialog 归宿主页。
 >
 > | 工作 | 具名角色 | 调度约束 |
 > |---|---|---|
-> | 设计 | `arkts-ui-test-designer` | PHASE=NAVIGATION 先映射/导航；PHASE=FUNCTION 按页读映射和 Android 写功能设计 |
+> | 设计 | `arkts-ui-test-designer` | PHASE=NAVIGATION 先映射/导航；PHASE=FUNCTION 按页读映射和 iOS 写功能设计 |
 > | 导航骨架/注册 | `arkts-ui-test-generator` | MODE=scaffold 后 register + TEST_SCOPE=NAVIGATION；单一共享 owner，完成后冻结导航包输入 |
 > | 前期导航 | `arkts-ui-test-executor` | PHASE=NAVIGATION，单设备独占；不等待全部功能设计/测试 |
 > | 并行页面编写 | `arkts-ui-test-generator` | MODE=generate；按需最多 8 agent，单 agent 单 PAGE_SCOPE，完成即补位；只写本页 Features.ets/测试 |
@@ -73,9 +65,8 @@ metadata:
 
 ## 页面范围、源码依据与映射
 
-开始先读 [页面源码映射契约](references/page-source-map.md)。以 Android 源码确定预期行为，以鸿蒙源码/当前界面确定点击目标，UI Spec 作为参考索引。盘点并归组全部实际可见页面；普通 Dialog、Sheet、嵌入式 Fragment 属于宿主页功能，不独立计页面。独立 Tab/全屏 Fragment 按实际页面处理，不按 Spec 文件数或 ets/pages 目录数生成套件。
 
-主线程持久化 `spec/verify/ui/plan/page-source-map.json`，保存鸿蒙页面、Android 源文件/符号/哈希、附属 Dialog、Spec 引用、flow、landmark 和设备证据。分派单页 agent 时传入 `ANDROID_ROOT`、`PAGE_MAP`、`MAPPING_REVISION`；agent 直接读取对应源码，版本失效时复核，不能只读映射摘要。
+先按 ios-ui-analyzer 的入口与身份事实盘点页面；普通模态/嵌入 View 归宿主，独立 Tab/全屏目的地按真实可见边界分组。主线程持久化 `spec/verify/ui/plan/page-source-map.json`，保存鸿蒙页面、iOS 源文件/符号/哈希、附属 Dialog、Spec 引用、flow、landmark 和设备证据。分派单页 agent 时传入 `SOURCE_ROOT`、`PAGE_MAP`、`MAPPING_REVISION`；agent 直接读取对应源码，版本失效时复核，不能只读映射摘要。
 
 ## 核心契约
 
@@ -93,7 +84,7 @@ metadata:
 
 - `waitForComponent(targetLandmark, timeout)` 是到达目标 UI surface 的主判据；landmark 必须在该 surface 上可见并能唯一标识它，不能只用通用 `Column`、重复标题或“应用仍在前台”。
 - `waitForIdle()` 可辅助确认界面稳定，但必须检查返回值，且不能替代目标 UI surface 的唯一可见 landmark。
-- 设计阶段找不到真实 UI 路径时先区分首因：Android 源码确认要求该入口但产品缺失，使用 `entry_kind=ENTRY_GAP` 登记导航根缺口，执行阶段静态确认后为 `RED/IMPL_MISSING`；需求本身没有公开 UI 路径/观察面，或现有 UI 在“已有稳定 ID / 唯一可见文本”规则下无法形成唯一可操作、可观察 locator，记 `ERROR/UNREACHABLE_BY_UI` 并转 UT、集成或人工验证。真实入口的账号、应用权限或业务数据契约暂不可用时保留入口类型并记 `ERROR/SETUP`；目标设备、系统测试能力、系统宿主、runner/framework 或明确的目标设备网络基础设施不可用时记 `ERROR/INFRA`；一般网络或服务条件按责任证据判定，不凭“offline”字样固定归类。只有已有 canonical 导航根问题文件（含静态 `ENTRY_GAP`）且因此未执行的下游功能用例才使用 `BLOCKED_BY_NAVIGATION`，不得降级为直挂页面。
+- 设计阶段找不到真实 UI 路径时先区分首因：iOS 源码确认要求该入口但产品缺失，使用 `entry_kind=ENTRY_GAP` 登记导航根缺口，执行阶段静态确认后为 `RED/IMPL_MISSING`；需求本身没有公开 UI 路径/观察面，或现有 UI 在“已有稳定 ID / 唯一可见文本”规则下无法形成唯一可操作、可观察 locator，记 `ERROR/UNREACHABLE_BY_UI` 并转 UT、集成或人工验证。真实入口的账号、应用权限或业务数据契约暂不可用时保留入口类型并记 `ERROR/SETUP`；目标设备、系统测试能力、系统宿主、runner/framework 或明确的目标设备网络基础设施不可用时记 `ERROR/INFRA`；一般网络或服务条件按责任证据判定，不凭“offline”字样固定归类。只有已有 canonical 导航根问题文件（含静态 `ENTRY_GAP`）且因此未执行的下游功能用例才使用 `BLOCKED_BY_NAVIGATION`，不得降级为直挂页面。
 - 产品入口、点击行为和目标 UI surface 已由源码与控件树证实存在且可用，但测试 helper 使用了错误/过期 selector、错误作用域、reset 或等待策略时：记 `kind=ERROR`、`failure_class=SETUP`，阻断该页用例，不把页面功能误报为 RED。真实产品点击链或目标 UI surface 的唯一可见 landmark 失败仍按 `RED/NAVIGATION|IMPL_MISSING`。
 - 如果“点击某入口并到达目标 UI surface”本身就是业务需求，则把它作为来源页的 `case_kind=PAGE` 单功能点用例，使用来源页的 `P{NNNN}` ID 并放在来源页测试目录；canonical navigation preflight 仍只验证 setup/reachability，不另造第三种业务用例类型。
 - 系统入口、deeplink 和跨应用跳转是合法的真实产品入口类型，写入 `entry_kind` 与理由；其 flow 从已证实的真实生产触发上下文开始，不先强制启动默认 Ability，并等待目标 UI surface 的唯一可见 landmark。该 surface 可位于被测应用、系统 UI 或系统宿主，不能笼统要求“进入目标应用”后才判定可达。
@@ -160,7 +151,7 @@ metadata:
 
 已安装的导航包与输入快照固定；后台页面写作不会改变设备正在执行的包。产品修复、共享导航/helper 修改与下一次构建受主线程 barrier 控制，变更需使相关映射/草稿失效并复核。严禁边构建边修改源文件。
 
-每次调度传 `SKILL_ROOT`（实际绝对目录）、`PROJECT_ROOT`、`ANDROID_ROOT`、`PAGE_MAP`、`MAPPING_REVISION`、页面 ownership 和该角色本轮参数。设计/执行的 PHASE 与生成 MODE、验证 MODE 分别传递，不混用。角色从 SKILL_ROOT 读取 references，不递归执行主线程编排。
+每次调度传 `SKILL_ROOT`（实际绝对目录）、`PROJECT_ROOT`、`SOURCE_ROOT`、`PAGE_MAP`、`MAPPING_REVISION`、页面 ownership 和该角色本轮参数。设计/执行的 PHASE 与生成 MODE、验证 MODE 分别传递，不混用。角色从 SKILL_ROOT 读取 references，不递归执行主线程编排。
 
 ### Step 1 必读
 
@@ -213,7 +204,7 @@ metadata:
         └── journeys/
 ```
 
-`spec/baseline/` 与 Android 源码仍是原位置的输入，不搬进验证目录。可执行 ArkTS 测试只在 `ohosTest` 下维护一份；`spec/verify/ui/` 不存第二份可编辑测试代码，也不生成重复报告或并行计划目录。前期导航与最终功能使用不同 round；两个阶段都写在此统一根下。
+`spec/baseline/` 与 iOS 源码仍是原位置的输入，不搬进验证目录。可执行 ArkTS 测试只在 `ohosTest` 下维护一份；`spec/verify/ui/` 不存第二份可编辑测试代码，也不生成重复报告或并行计划目录。前期导航与最终功能使用不同 round；两个阶段都写在此统一根下。
 
 注册生成器必须递归扫描 `ui/**/*.test.ets`，再将确定性的显式 import 与 suite 调用静态写入 `List.test.ets`，覆盖 `pages/`、`navigation/` 与 `journeys/`；运行时不使用 glob，helper/page object 文件本身不注册。
 
@@ -221,7 +212,7 @@ metadata:
 
 每页都要完成：
 
-1. 直接读取映射中的 Android 源文件及必要调用链，拆分用户可观察功能需求；UI/Feature Spec 辅助追溯并记录差异。
+1. 直接读取映射中的 iOS 源文件及必要调用链，拆分用户可观察功能需求；UI/Feature Spec 辅助追溯并记录差异。
 2. 读页面、入口组件、路由注册、守卫、资源字符串和相关共享组件源码，确认真实入口，不只 grep `NavPathStack`。
 3. 产 canonical entry flow；每跳 source action 与目标 UI surface 的唯一可见 landmark 都有源码/Spec/运行时界面事实依据。
 4. 以需求覆盖设计最小用例集，不以组件树数量凑用例。
@@ -240,7 +231,7 @@ rg 'compatibleSdkVersion|targetSdkVersion' build-profile.json5
 $HDC list targets
 ```
 
-Android 源码或页面映射缺失/有歧义时先补齐；UI Spec 缺失记录参考缺口，不取代源码 oracle。设备检查只在设备执行前强制，导航包就绪即可执行，不等待全部功能测试。
+iOS 源码或页面映射缺失/有歧义时先补齐；UI Spec 缺失记录参考缺口，不取代源码 oracle。设备检查只在设备执行前强制，导航包就绪即可执行，不等待全部功能测试。
 
 第三步执行还需确认测试签名、设备可用和当前系统要求的 UiTest 运行条件；具体命令以项目 SDK 与 `.codex/agents/arkts-ui-test-executor.toml` 为准，不从框架 `master` 仓库的开发者命令推断应用测试环境。
 
@@ -278,7 +269,7 @@ Android 源码或页面映射缺失/有歧义时先补齐；UI Spec 缺失记录
 
 - [ ] 每页有 `plan/pages/P*.md` 与 `plan/navigation/P*.md`，用例、flow、selector 和可观察结果可追溯。
 - [ ] 前期全量导航完成与功能编写两分支均通过汇合检查；最终包每页先真实点击准入再测功能，不重复独立全量导航、不复用旧包 GREEN。
-- [ ] 可见页面与 Android 源文件映射已落盘并复核版本，普通 Dialog 属于宿主页，页面范围按 ID 对账无遗漏。
+- [ ] 可见页面与 iOS 源文件映射已落盘并复核版本，普通 Dialog 属于宿主页，页面范围按 ID 对账无遗漏。
 - [ ] 页面准入与逐例状态准备/清理分离；普通批次不主动重启，已授权的重启例外有原因和证据，清理失败不污染后续用例。
 - [ ] 每条 IN_APP flow 都由真实可见组件逐跳到页；每种可执行 `entry_kind` 都等待其目标 UI surface 的唯一可见 landmark，并明确该 surface 由被测应用、系统 UI 或系统宿主中的哪一方呈现。
 - [ ] 没有测试专用页面参数、内部路由调用或其他目标页直挂路径。

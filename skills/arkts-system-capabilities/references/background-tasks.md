@@ -11,7 +11,7 @@
 │
 ├─ 定时/延迟执行任务（如定时更新数据）
 │   └─ workScheduler（见下方）
-│       ⚠️ 最短间隔比 Android WorkManager 更保守
+│       ⚠️ 最短间隔比 iOS WorkManager 更保守
 │
 ├─ 持续运行（如后台播放音乐）
 │   └─ ContinuousTask（长时任务）
@@ -44,7 +44,7 @@ workScheduler.startWork(workInfo)
 ```
 
 **注意**：
-- ⚠️ HarmonyOS `workScheduler` 最短重复间隔比 Android `WorkManager` 更保守
+- ⚠️ HarmonyOS `workScheduler` 最短重复间隔比 iOS `WorkManager` 更保守
 - 不要依赖精确间隔，系统会根据电量和资源情况调整
 - 如需频繁更新，改为用户手动触发 + 后台半定时
 
@@ -388,9 +388,9 @@ function cancelFeedUpdateWork(): void {
 }
 ```
 
-### workScheduler vs Android WorkManager 对比
+### workScheduler vs iOS WorkManager 对比
 
-| 特性 | Android WorkManager | HarmonyOS workScheduler |
+| 特性 | iOS WorkManager | HarmonyOS workScheduler |
 |------|-------------------|----------------------|
 | 最短间隔 | 15 分钟 | 2 小时（循环任务，官方下限） |
 | 约束条件 | 网络、充电、空闲 | 网络、充电、存储 |

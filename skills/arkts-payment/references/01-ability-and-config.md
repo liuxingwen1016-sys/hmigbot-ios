@@ -100,7 +100,7 @@ export default class EntryAbility extends UIAbility {
     WXApi.handleWant(want, wxEventHandler)
     // 注：HarmonyOS 版 SDK 的 WXApi 接口（1.0.x）只有 4 个方法：
     //   sendReq / openWechat / handleWant / isWXAppInstalled
-    // 没有 registerApp —— 那是 Android SDK 的遗留。createWXAPI() 内部已完成 App 注册，
+    // 没有 registerApp —— 那是 iOS SDK 的遗留。createWXAPI() 内部已完成 App 注册，
     // 不需要（也无法）额外调用 registerApp。
   }
 
@@ -256,7 +256,7 @@ const md5 = <md5-lib>(fp)  // 32 位 MD5
 
 ### ⚠️ 不要调用 `registerApp`
 
-某些外部资料（特别是沿袭 Android SDK 写法的教程）会建议调用 `WXApi.registerApp(appId, handler)`。
+某些外部资料（特别是沿袭 iOS SDK 写法的教程）会建议调用 `WXApi.registerApp(appId, handler)`。
 **在 HarmonyOS 版 `@tencent/wechat_open_sdk` (1.0.x) 中这个方法不存在**，写上去会编译报错：
 
 ```

@@ -171,7 +171,7 @@ This is the **module-level** configuration for the entry module. It declares abi
         // true for the main launcher ability.
         "exported": true,
 
-        // Skills define the IntentFilter-like matching rules.
+        // Skills define the ability action, entity and URI matching rules.
         // This makes the ability appear in the device launcher.
         "skills": [
           {
@@ -511,7 +511,7 @@ Project-level build configuration. Defines products (build variants) and module 
       }
     ],
 
-    // Products define build variants (like Android build flavors).
+    // Products define build variants (like iOS build flavors).
     "products": [
       {
         // Product name. Used when building: hvigorw assembleHap --mode module -p product=default
@@ -604,7 +604,6 @@ Root-level package configuration for the entire project (workspace).
 
 ## 11. hvigorfile.ts (root level)
 
-The root-level build script. Hvigor is HarmonyOS's build system (similar to Gradle).
 
 ```typescript
 // Import the appTasks plugin which provides top-level build tasks

@@ -1,0 +1,16 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "Welcome": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "欢迎"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

@@ -1,0 +1,12 @@
+[
+  "android-api-inventory",
+  "android-fact-tree",
+  "android-screenshot-analyzer",
+  "android-ui-graph-builder",
+  "android-ui-graph-query",
+  "android-view-to-arkui",
+  "android2hmos-resources-convert",
+  "app-relationship-tree",
+  "compose-fact-tree",
+  "toolkit-fact-indexer"
+]

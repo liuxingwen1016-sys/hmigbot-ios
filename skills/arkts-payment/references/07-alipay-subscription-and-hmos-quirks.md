@@ -122,7 +122,7 @@ if (isAlipayScheme(payDetail, hint)) {
 
 **触发场景**：用户从本 App 拉起支付宝 App 完成签约——此期间本 App 整段都在后台。
 
-> 这是 HMOS 平台行为，与微信/支付宝 SDK 无关。Android 上不存在。
+> 这是 HMOS 平台行为，与微信/支付宝 SDK 无关。iOS 上不存在。
 
 ### 2.2 解决思路：onForeground 唤醒 + 可中断 sleep
 
@@ -587,7 +587,7 @@ console.info(
 
 支付链路遇到"判定永远走默认分支"类 bug，常常是因为客户端的字段类型定义与后端实际下发不符。
 
-**典型场景**：客户端按文档/Android 定义为 `number`（如 `1=SDK / 2=SCHEME`），但后端实际返字符串 `"appScheme"`。
+**典型场景**：客户端按文档/iOS 定义为 `number`（如 `1=SDK / 2=SCHEME`），但后端实际返字符串 `"appScheme"`。
 
 **通用应对**：
 - 字段类型尽量保守用 `string`（让数字也能通过）

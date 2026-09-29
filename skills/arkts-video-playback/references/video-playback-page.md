@@ -8,10 +8,10 @@
 
 ## 前置步骤：资源先拷 4 张 webp
 
-模板里的控件层引用了 Android 原生 SuperPlayer 的 4 张图标资源；如果 Android 源码工程在手，**先拷到 `entry/src/main/resources/base/media/` 再写代码**，否则 `$r('app.media.player_ic_*')` 会 resolve 失败。
+模板里的控件层引用了 iOS 原生 SuperPlayer 的 4 张图标资源；如果 iOS 源码工程在手，**先拷到 `entry/src/main/resources/base/media/` 再写代码**，否则 `$r('app.media.player_ic_*')` 会 resolve 失败。
 
 ```bash
-# 原路径：<Android 工程>/<player 模块>/src/main/res/drawable-xxhdpi/
+# 原路径：<源工程>/Assets.xcassets/<实际 imageset>/
 cp player_ic_backward.webp           entry/src/main/resources/base/media/
 cp player_ic_forward.webp            entry/src/main/resources/base/media/
 cp player_ic_vod_pause_normal.webp   entry/src/main/resources/base/media/
@@ -24,7 +24,7 @@ cp player_ic_vod_play_normal.webp    entry/src/main/resources/base/media/
 
 **不要**用 Unicode `▶` / `❙❙` 字符当图标——跨设备字形不一致、缺弧箭头数字、手搓黑圆会和原图灰圆叠加。
 
-如果没有 Android 源码可拷（全新项目），退而求其次用 `SymbolGlyph($r('sys.symbol.play_fill / pause'))` + `backward_15` / `forward_15` 两个系统符号，但视觉上会和 Android 版不完全一致（系统符号是线框，非灰圆填充）。
+如果没有 iOS 源码可拷（全新项目），退而求其次用 `SymbolGlyph($r('sys.symbol.play_fill / pause'))` + `backward_15` / `forward_15` 两个系统符号，但视觉上会和 iOS 版不完全一致（系统符号是线框，非灰圆填充）。
 
 ---
 
@@ -433,11 +433,11 @@ build() {
         colors: [['rgba(0,0,0,0.55)', 0.0], ['rgba(0,0,0,0)', 1.0]],
       })
 
-      // 5) 左右两侧 -15s / +15s（对齐 Android player_vod_player_fullscreen.xml）
-      //    资源：从 Android <player 模块>/res/drawable-xxhdpi 拷 player_ic_backward.webp / player_ic_forward.webp
+      // 5) 左右两侧 -15s / +15s（以实际 iOS 播放页 spec 的动作和间距为准）
+      //    资源：由 ios-resources-convert 的实际资源映射提供后退/前进图标
       //    到 entry/src/main/resources/base/media/。webp 自带灰半透明圆底 + 弧箭头 + "15" 数字，
       //    不要再套 rgba 黑圆或加 Text("15")——会双圆叠加且中心偏。
-      //    尺寸：36×36vp（对齐 Android 36dp），距屏边 95vp（对齐 marginLeft="dp_95"）。
+      //    尺寸：36×36vp（对齐 iOS 36dp），距屏边 95vp（对齐 marginLeft="dp_95"）。
       //    竖直正中：top:'50%' + translate(y:-18) = layout_centerVertical。**不要写 top:'42%'**。
       Row() {
         Image($r('app.media.player_ic_backward'))
@@ -452,10 +452,10 @@ build() {
       .position({ top: '50%', left: 0 })
       .translate({ y: -18 })
 
-      // 6) 中心播放/暂停（对齐 Android FullScreenPlayer.updatePlayState）
+      // 6) 中心播放/暂停（对齐 iOS FullScreenPlayer.updatePlayState）
       //    资源：player_ic_vod_pause_normal.webp（灰圆+❙❙）/ player_ic_vod_play_normal.webp（灰圆+▶）
       //    切换规则："按 action 展示"：PLAYING → pause（点=暂停）；其他 → play（点=播放）。
-      //    尺寸：50×50vp（对齐 Android 50dp），layout_centerInParent=true。
+      //    尺寸：50×50vp（对齐 iOS 50dp），layout_centerInParent=true。
       //    **不要**用 Unicode `▶`/`❙❙` 字符——跨设备字形不一致；也不要外层 Column + 手搓黑圆。
       Image(this.playerState === PlayerState.PLAYING
         ? $r('app.media.player_ic_vod_pause_normal')

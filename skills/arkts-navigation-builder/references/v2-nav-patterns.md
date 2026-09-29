@@ -1067,7 +1067,7 @@ struct SlideUpPage {
 }
 ```
 
-> DIALOG 模式是**页面级**弹窗（参与路由栈、被后续 push 覆盖、随 pop 销毁）；与之相对 `@CustomDialog`/`openCustomDialog` 默认全局级、恒盖路由页——Android Dialog 语义迁移的选型见 arkts-component-builder/references/v2-dialogs-and-sheets.md §2c。
+> DIALOG 模式是**页面级**弹窗（参与路由栈、被后续 push 覆盖、随 pop 销毁）；与之相对 `@CustomDialog`/`openCustomDialog` 默认全局级、恒盖路由页——iOS Dialog 语义迁移的选型见 arkts-component-builder/references/v2-dialogs-and-sheets.md §2c。
 
 ---
 

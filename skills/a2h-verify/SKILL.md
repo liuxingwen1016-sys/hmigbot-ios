@@ -1,6 +1,6 @@
 ---
 name: a2h-verify
-description: 第四步：验证 Android→HarmonyOS 迁移产出，执行静态分析与 App 身份校验，并由用户选择视觉对齐和单元测试，汇总所选范围内的真实结果。当用户说“验证迁移结果”“跑一下验证”或在迁移上下文中说“验证”“测试”时触发。
+description: "第四步：验证 iOS→HarmonyOS 迁移产出，执行静态分析与 App 身份校验，并由用户选择视觉对齐和单元测试，汇总所选范围内的真实结果。当用户说“验证迁移结果”“跑一下验证”或在迁移上下文中说“验证”“测试”时触发。"
 metadata:
   type: pipeline
   domain: migration
@@ -8,6 +8,8 @@ metadata:
   - pipeline
   - migration
 ---
+
+
 # a2h-verify
 
 Pipeline 第四步，负责基础检查与可选设备验证的编排和结果汇总。静态分析与 App 身份校验在主对话执行；用户选中的视觉、UT 委托对应 verifier，具体测试设计、构建、设备执行和内部修复按各 skill 的契约完成。
@@ -29,7 +31,7 @@ Pipeline 第四步，负责基础检查与可选设备验证的编排和结果�
 ## 输入与范围
 
 - 确认鸿蒙工程根目录、待验证模块和用户指定范围；默认验证当前迁移产出。
-- 仅为本次执行项从当前任务、工程记录或 `spec/baseline/` 定位所需的 Android 源码根目录、页面清单、UI Spec 与功能 Spec，不要求额外的执行报告作为启动凭证。
+- 仅为本次执行项从当前任务、工程记录或 `spec/baseline/` 定位所需的 iOS 源码根目录、页面清单、UI Spec 与功能 Spec，不要求额外的执行报告作为启动凭证。
 - 某项输入、设备或 verifier 缺失时，记录该项受影响范围和恢复条件，继续其他可执行项。各 verifier 的输入和设备要求见 [设备验证](references/device-verification.md)。
 
 ## 四项检查
@@ -76,19 +78,9 @@ CHECK-1/2 的具体规则见 [静态分析与 App 身份](references/static-and-
 
 已选项未生成报告、修复文件已写入或问题文件目录为空，都不能据此判 PASS。报告明确写出执行项与未选项；PASS 仅表示本次范围通过，存在未选项时不能描述为所有四项均已验证。
 
-## 收尾：盘库与阶段水位
+## 阶段证据
 
-成功产出 `spec/verify-report.md` 后，作为本 skill 的最后一步依次执行以下命令。每条命令均忽略退出码，不阻断交付，也不改变报告中的验证结论。
-
-```bash
-# 1. 统计 Android 与 HarmonyOS 两侧代码行
-.migbot/bin/a2h count-lines
-
-# 2. 标记本阶段水位
-.migbot/bin/a2h mark-stage a2h-verify
-```
-
-`count-lines` 写入两侧代码行数，必须先于 `mark-stage a2h-verify`，确保阶段水位落库时行数已就位。阶段水位用于服务端识别本阶段已经结束，不将 FAIL、PARTIAL 或未选项改判为 PASS；通过范围仍以本次报告为准。token、subagent 和 skill 维度用量由生命周期 hook 上传的会话记录在服务端解析，本步骤不运行 CC 的 metrics 上传命令。
+将真实产物、源/目标版本、校验命令与结果写本阶段报告；状态以证据为准。无需遥测上传。
 
 ## 参考文件
 

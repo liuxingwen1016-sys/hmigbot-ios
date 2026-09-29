@@ -1,6 +1,6 @@
 ---
 name: arkts-immersive-safearea
-description: 在 ArkTS / HarmonyOS 项目中同时实现"沉浸式背景延伸到全屏"和"前景内容避开状态栏/导航条/挖孔区"的标准方案。当用户提到"沉浸式"、"状态栏遮住内容"、"底部导航条挡住按钮"、"页面顶部白边"、"背景没延伸到状态栏"、"折叠屏适配"、"安全区"、"setWindowLayoutFullScreen"、"expandSafeArea"、"windowTopPadding/windowBottomPadding"，或者新建/迁移 NavDestination 页面时，务必触发此 skill。即使用户只说"页面背景没满屏"或"按钮被系统栏盖住"，也应触发——因为这两类问题 99% 都对应这套四层架构里的某一层缺失。
+description: "在 ArkTS / HarmonyOS 项目中同时实现\"沉浸式背景延伸到全屏\"和\"前景内容避开状态栏/导航条/挖孔区\"的标准方案。当用户提到\"沉浸式\"、\"状态栏遮住内容\"、\"底部导航条挡住按钮\"、\"页面顶部白边\"、\"背景没延伸到状态栏\"、\"折叠屏适配\"、\"安全区\"、\"setWindowLayoutFullScreen\"、\"expandSafeArea\"、\"windowTopPadding/windowBottomPadding\"，或者新建/迁移 NavDestination 页面时，务必触发此 skill。即使用户只说\"页面背景没满屏\"或\"按钮被系统栏盖住\"，也应触发——因为这两类问题 99% 都对应这套四层架构里的某一层缺失。"
 metadata:
   type: domain
   domain: ui
@@ -145,7 +145,6 @@ ArkTS 应用经常遇到两类对立又共存的需求：
 | **滚动列表 + 沉浸式 banner** | 首页 banner + 上下滚 | [references/scroll-bleed.md](references/scroll-bleed.md) |
 | **V1（@Component）混栈 / 老代码** | 不能用 V2 装饰器的场景 | [references/v1-v2-compat.md](references/v1-v2-compat.md) |
 | **Hero 顶部白边 / Image y 不为 0 / BottomBar 飘到顶** | Layer 3 layout 写法触发了 ArkUI 自动让位 | [references/layout-traps.md](references/layout-traps.md) |
-| **Android Activity 迁移到 NavDestination** | 见下表"Android 映射" | 主文件下面 |
 
 ## 默认 V2 模板（场景 A：MainPage 子页 / NavPathStack 子页）
 
@@ -202,14 +201,11 @@ struct MyPage {
 }
 ```
 
-## Android Activity → NavDestination 映射
 
-| Android | ArkTS 等价 |
+| iOS | ArkTS 等价 |
 |---|---|
 | `setDecorFitsSystemWindows(false)` | Layer 1 已统一开了 `setWindowLayoutFullScreen(true)`，**不要每页重做** |
-| `WindowInsetsCompat.Type.systemBars()` | `windowModel.windowTopPadding + windowBottomPadding` |
 | `view.setPadding(0, statusBar, 0, navBar)` | `padding({ top: windowTopPadding, bottom: windowBottomPadding })` |
-| `android:fitsSystemWindows="true"` | 不需要，**不要写**单独的 `expandSafeArea` |
 
 ## 诊断症状 → 修复路径
 
@@ -299,10 +295,9 @@ struct MyPage {
 
 ## 主题状态栏色的合法落点（与 theme_brief/theme_gate 的接口，2026-08-25）
 
-Android 主题声明了状态栏色（`android:statusBarColor` 或框架缺省）而页面走本 skill 四层架构时：
 - Layer 1 仍按本契约把系统栏设**透明**——不得为了主题色改回不透明系统栏；
 - 主题状态栏色由**页面顶部背景**承载：顶部安全区高度的背景色（或专用色条）取该主题色，
-  视觉效果等价于 Android 的着色状态栏；
+  视觉效果等价于 iOS 的着色状态栏；
 - 该色经 `$r('app.color.*')` 绑定（theme_gate 对账点）；`setWindowSystemBarProperties`
   路径只吃字符串色值，走该路径时豁免 `$r` 强制（写常量并注明来源于 resolved-theme）；
 - 主题状态栏色为**透明**（#00...）时即本契约的原生形态，无需任何附加动作。

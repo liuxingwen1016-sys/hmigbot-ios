@@ -35,7 +35,7 @@ detail: plans/base-plan.md
 所有 Feature Slices 共用的基础设施，必须先完成。
 
 - Base-0: 资源前置扫描与迁移
-  - suggested_skills: [android2hmos-resources-convert]
+  - suggested_skills: [ios-resources-convert]
   - input: 所有 spec 中引用的资源 ID 全集（扫描 spec/baseline/ui/page_*.md、spec/baseline/features/F-*.md、feature-base.md）
   - output: entry/src/main/resources/ 全量资源 + spec/baseline/plans/resource-mapping.md
   - acceptance: 缺失资源显式标 `$r('app.media.MISSING_xxx')`（编译期失败暴露而非静默 fallback）
@@ -62,7 +62,7 @@ detail: plans/base-plan.md
   - input: feature-base.md Events 段
   - output: entry/src/main/ets/events/*.ets
 
-- Base-5: Preferences — SharedPreferences 迁移
+- Base-5: Preferences — 偏好设置与持久化行为迁移
   - suggested_skills: [arkts-data-layer]
   - input: feature-base.md Preferences 段
   - output: entry/src/main/ets/preferences/*.ets

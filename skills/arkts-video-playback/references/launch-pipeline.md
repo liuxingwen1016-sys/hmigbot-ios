@@ -30,7 +30,7 @@ class VideoPlayerCore {
   /**
    * 启播 3 路策略：
    * 1) Fast path: 调用方透传 videoUrl
-   * 2) Fallback A: detail-multi（结构化更完整，对齐 Android 列表页字段）
+   * 2) Fallback A: detail-multi（结构化更完整，对齐 iOS 列表页字段）
    * 3) Fallback B: detail-single（已知部分子项返空字符串，最后兜底）
    */
   async loadAndStart(params: PlayerRouteParams): Promise<void> {

@@ -1,10 +1,4 @@
-# openai.yaml — Codex skill interface for the converted `a2h-init` command.
-# When the user selects this skill in /skills, `interface.default_prompt` is
-# auto-attached — the Codex equivalent of running the slash command.
 interface:
-  display_name: "a2h-init"
-  default_prompt: |
-    Run the $a2h-init flow now: provision the runtime, run the User Experience Improvement Plan consent flow, confirm the android/harmonyos/deveco/hvigorw/adb/hdc paths, and set confirmed:true. Treat any user input as ignored.
-
-policy:
-  allow_implicit_invocation: true
+  display_name: a2h-init
+  short_description: 初始化 iOS 源根、鸿蒙目标与工具路径；确认 source_platform=ios，保留用户配置，区分本地源分析、目标…
+  default_prompt: 请使用 $a2h-init，按本技能的输入、执行步骤和验收条件完成当前任务。

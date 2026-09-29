@@ -16,7 +16,7 @@
 - 设置了 `.textOverflow({ overflow: TextOverflow.Ellipsis })` 加 `.maxLines(1)`，文本溢出时**没有省略号**，直接硬截
 - 显示的"省略号"是 3 个英文句点 `...` 而不是标准 `…`
 - 图文混排（含 `ImageSpan`）场景下省略号**字号异常小**
-- 跨平台（ArkUI-X iOS / Android）上省略号**垂直居中**而非底部对齐
+- 跨平台（ArkUI-X iOS / iOS）上省略号**垂直居中**而非底部对齐
 - `TextOverflow.Clip` 也不裁剪，内容仍然溢出
 - 文本宽度恰好等于容器宽度（临界值）时错误显示省略号
 

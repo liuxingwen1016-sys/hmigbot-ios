@@ -1,6 +1,6 @@
 ---
 name: a2h-execute
-description: Android→ArkTS 迁移代码的三阶段执行引擎（Pipeline 第三步）：按 ui-plan.md/feature-plan.md 派发 subagent 完成页面转换、基础设施、功能切片，含编译闭环。当用户说"执行迁移""开始执行""按 plan 开始做"时触发，支持部分执行/重试/断点续跑。不要用于：生成 Spec（用 a2h-spec）或计划（用 a2h-plan）；plan 未就绪时先跑 a2h-plan。
+description: "iOS→ArkTS 迁移代码的三阶段执行引擎（Pipeline 第三步）：按 ui-plan.md/feature-plan.md 派发 subagent 完成页面转换、基础设施、功能切片，含编译闭环。当用户说\"执行迁移\"\"开始执行\"\"按 plan 开始做\"时触发，支持部分执行/重试/断点续跑。不要用于：生成 Spec（用 a2h-spec）或计划（用 a2h-plan）；plan 未就绪时先跑 a2h-plan。"
 metadata:
   type: pipeline
   domain: migration
@@ -9,15 +9,13 @@ metadata:
   - migration
 ---
 
-> **Codex subagent dispatch convention.** This skill dispatches subagents. In Codex, spawn them with the `spawn_agent` tool and pass `agent_type` = the role name **exactly as written in this skill** — the roles registered under `.codex/agents/*.toml` use the same hyphenated names, so no translation step is involved: `a2h-activity-converter`, `a2h-android-analyzer`, `a2h-closer`, `a2h-fixer`, `a2h-migration-worker`, `ad-profile-builder`, `compose-fact-analyzer`, `hmos-builder`, `scenario-builder`, `visual-fixer`, `visual-fixer-reviewer`. The built-in `general-purpose` agent_type is unchanged. (Claude's `subagent_type` field is written `agent_type` for Codex; `Agent(...)` dispatch calls are `spawn_agent(...)`; there is no `Task` tool in Codex.)
->
-> **Join 协议（收口五条款）。** Codex 子代理完成后**不会**唤醒主会话——结果必须由派发方主动收口，违者=静默卡死（实测事故）。
-> ① **循环 wait**：每个 `spawn_agent` 句柄用循环调用 `wait_agent` 收口；单次超时只代表"还在跑"，继续再调；**禁止以"等待子代理"为由结束回合**。醒后必调 `list_agents` 确认是谁完成——**完成的唯一合法信号 = `agent_status` 为 `{"completed": …}`，绝不是产物文件的存在/条数**（文件会中途落盘，读半截=实测事故）；completed 态会在数轮后从 list 中消失，所以每次醒来都要及时查。正文所有"等待完成 / join / 到点即收"表述一律指此循环。
-> ② **死句柄与验收**：连续 3 次超时后调 `list_agents` 核对，可配 `wait_for_artifact.py` 探产物活性；已 completed 且 summary 可读 → 直接消费；句柄消失且从未观测到 completed → 按断点重派（带原 prompt + 已落盘产物，上限 2 次），禁止继续等待。**completed ≠ 验收通过**：join 点跑 `python3 .agents/skills/a2h-join/scripts/join_gate.py --project .` 验产物完整性，FAIL 视同未取回、按本条重派。
-> ③ **收口锚点**：本 skill 最终完成报告前必须收口全部句柄（join_gate exit 0）；正文写明的显式 join 点优先按正文执行。发用户门（Gate）时允许句柄跨 Gate 存活，但 Gate 摘要必须列明未收口句柄清单 + 各自的指定 join 点。
-> ④ **放行 ≠ 遗弃**：正文"非阻塞放行/到点即收/降级继续"只推迟收口时机，不豁免收口义务。
-> ⑤ **fire-and-forget**：仅正文显式声明"结果丢弃/不 gate"的派发（如 a2h-execute 的 env-prewarm）免收口；审计只认 join_gate 内静态 allowlist，正文声明只是文档层。
-> **派发纪律**：`task_name` 必须唯一（带 page-id/slice-id/round-N 后缀）；并行派发前把预期产物清单写 `spec/a2h/_work/expected_<join点>.json`（join_gate 对账用，契约只认派发方、不认子代理自报）；**谁派谁收**——sub-agent 内部需要"等齐 N 片再合并"时禁止嵌套外派后自行退出，要么同步自做、要么把分片清单回报主会话代派（sub-agent 一停止，收口能力即丢）。**契约产物必须出自承担任务的子代理**：重派上限后仍产不出 → 如实报缺并停在未完成态；禁止派发方代写占位产物让 gate 转绿（声明过也不行——绿账必须对应真产物）。
+
+## 宿主执行与收口
+
+按本轮授权读取随包角色规程，使用宿主实际支持的派发/等待接口；不要照抄不存在的 agent_type 参数。
+具名角色不可用时按同样文件所有权顺序执行。共享账本只有一个 closer，完成后回读真实产物。
+阶段门沿用已有授权；新产品决策才询问。不能把文件存在或一次超时当作代理完成。
+最终报告前收口全部任务，未完成项保持原状态并继续可执行工作。
 
 # a2h-execute
 
@@ -60,7 +58,7 @@ Pipeline 层第三步，**三阶段执行引擎**。读取 a2h-plan 生成的双
 a2h-spec → a2h-plan → a2h-execute（本 skill）
                           │
                           ├─ Stage 1: UI Pipeline
-                          │   └─ a2h-activity-converter agent × N 页面
+                          │   └─ a2h-ios-converter agent × N 页面
                           │
                           ├─ Stage 2: Feature Base
                           │   └─ a2h-migration-worker × Base 任务
@@ -69,7 +67,7 @@ a2h-spec → a2h-plan → a2h-execute（本 skill）
                               └─ 组内 slice worker 并行 → group-closer（接线+编译+结构 fix-forward+brief）→ 主线程仅处置冒泡
 ```
 
-**核心原则**：a2h-execute 是编排层，不实现任何迁移逻辑。所有实际工作通过 subagent 委托：Stage 1 使用 `a2h-activity-converter` agent，Stage 2/3 使用 `a2h-migration-worker` agent。
+**核心原则**：a2h-execute 是编排层，不实现任何迁移逻辑。所有实际工作通过 subagent 委托：Stage 1 使用 `a2h-ios-converter` agent，Stage 2/3 使用 `a2h-migration-worker` agent。
 
 ---
 
@@ -109,7 +107,7 @@ execute 期歧义已清零，本阶段只**按决策推进、不再交互式追�
 | `spec/baseline/ui/page_NNNN.md` | 各页面详细 UI Spec                                    |
 | `spec/placeholder-registry.md` | 占位符注册表                                           |
 | `spec/baseline/cross-module-contracts.md` | 多子仓专有：跨模块 seam 语义契约，跨子仓调用的权威依据                   |
-| `spec/baseline/resolved-theme.json` | 主题层机械真值（resolve_theme.py 产）——theme_brief 注入与 theme_gate 对账的唯一来源；缺席=主题闸无事可对账 | 可选 |
+| `spec/baseline/resolved-theme.json` | 从 iOS 颜色、字体、appearance 与布局证据人工建模并审阅的目标主题绑定契约——theme_brief 注入与 theme_gate 对账的唯一来源；缺席=主题闸无事可对账 | 可选 |
 | `spec/baseline/module-dep-graph.json` | 多子仓专有：被依赖子仓的接口签名桩                                |
 
 ---
@@ -138,7 +136,7 @@ execute 期歧义已清零，本阶段只**按决策推进、不再交互式追�
 
 完整流程 **MUST 加载** [references/stage-0-resources.md](./references/stage-0-resources.md)。
 
-调 `android2hmos-resources-convert` → 全部 `$r(...)` 引用可解析或显式 `MISSING_xxx` → 自动派 `arkts-i18n` skill 处理 `[TODO: translate]` 占位 → 自动派 `arkts-app-identity`（`scope=dev-identity`）落地 app_name / versionName / 图标（**跳过 bundleName / vendor**，属部署期 D-009、与签名 / AGC 强绑定）→ HARD-GATE 通过后进 Stage 1。
+调 `ios-resources-convert` → 全部 `$r(...)` 引用可解析或显式 `MISSING_xxx` → 自动派 `arkts-i18n` skill 处理 `[TODO: translate]` 占位 → 自动派 `arkts-app-identity`（`scope=dev-identity`）落地 app_name / versionName / 图标（**跳过 bundleName / vendor**，属部署期 D-009、与签名 / AGC 强绑定）→ HARD-GATE 通过后进 Stage 1。
 
 ---
 
@@ -146,23 +144,25 @@ execute 期歧义已清零，本阶段只**按决策推进、不再交互式追�
 
 > **前置依赖**：Stage 0 必须 PASS。`ui-plan.md` 中所有 `$r(...)` 引用在本阶段开始前应可解析或显式 MISSING。
 
-Stage 1 读取 `ui-plan.md`，按批次调用 `a2h-activity-converter` agent 将 Android 页面转换为 ArkTS。
+Stage 1 读取 `ui-plan.md`，按批次调用 `a2h-ios-converter` agent 将 iOS 页面转换为 ArkTS。
 
-**执行流程**：读 `ui-plan.md`，逐 Batch 执行：**批内页面默认全并行**派 `a2h-activity-converter` agent（单写者纪律各写各文件，导航目标未建由 FWD-REF 兜，无需逐页并行标注）→ 等本批全部完成 → 派发**批收尾 subagent（§3b：资源 sweep → writeback manifest，无编译，单写者）** → 下一 Batch，直到所有 Batch 完成；末尾 §3d 统一收口。
+**执行流程**：读 `ui-plan.md`，逐 Batch 执行：**批内页面默认全并行**派 `a2h-ios-converter` agent（单写者纪律各写各文件，导航目标未建由 FWD-REF 兜，无需逐页并行标注）→ 等本批全部完成 → 派发**批收尾 subagent（§3b：资源 sweep → writeback manifest，无编译，单写者）** → 下一 Batch，直到所有 Batch 完成；末尾 §3d 统一收口。
 
 ### 3a-pre. 数据完整性预检查（Stage 1 每页派发前）
 
-对当前 Batch 每个待转换页面做三源数据完整性预检（meta.json × view.xml 状态 → enrich / 合成 / scaffold+Phase A 三模式）。判定表 + 两段 `synthesize_*.py` 脚本调用方式 **MUST 加载** [references/data-prep.md](./references/data-prep.md)（Batch 级批量执行、可并行合成）。
+必读 references/data-prep.md，核对 iOS 源锚点、native facts、page spec、meta 与源版本。
+
 
 ### 3a. 子代理派发方式（Stage 1 专用）
 
-Stage 1 使用 `a2h-activity-converter` agent（**不是** a2h-migration-worker）。
+按 references/agent-prompts/1-converter.md 传 page_id、source_root、page_spec、ui_info、target、所有权与占位信息，使用 ios-ui-to-arkui。
 
-每页用子代理派发，传入五参数 `activity_name` / `ui_info`（ui-snapshots 目录，含 view.xml + meta.json）/ `harmony_project_dir` / `references_dir`（android-ui-graph-query/references/）/ `android_source_dir`，外加 `android_source_anchors`（page spec 顶部）、`registered_placeholders`（按本页 `owning_slice` 前缀 grep `spec/placeholder-registry.md` 所得已登记占位）、`wiring_ownership_map`（coverage-matrix）。converter 消费三源数据：view.xml（运行时层级）+ meta.json（页面元数据）+ 源码 layout XML（样式，经 `setContentView` 定位）。
+Stage 1 使用 `a2h-ios-converter` agent（**不是** a2h-migration-worker）。
+
 
 完整 converter prompt **MUST 加载** [references/agent-prompts/1-converter.md](./references/agent-prompts/1-converter.md) + [_common.md](./references/agent-prompts/_common.md) 作为派发模板（占位禁令 / `// FWD-REF:` marker 规则 / forward-ref 与 SDK 占位的合法形式等**不得简化为本 body 摘要**）。该 step 的 HARD-GATE 验收：
 
-- stub 命中 → 必须读 `android_source_anchors` 指向的源文件再生成；anchor 缺失 / 读取失败 → **FAIL，禁止 placeholderCard 占位**。
+- stub 命中 → 必须读 `source_anchors` 指向的源文件再生成；anchor 缺失 / 读取失败 → **FAIL，禁止 placeholderCard 占位**。
 - 合法占位遵循 §2.1：converter 可产 4 类——`// FWD-REF:`（forward-ref，自行发现，**写 marker 前先按 §2.1c 登记 registry**）/ registry 已登记的 `// PLACEHOLDER:`（thirdparty-sdk，plan 期直写）/ fallback 资产 `// FWD-REF:`（resource-pending-asset）/ 已登记 `// TODO:`（forward-ref-uncertain）；未登记 TODO / 空回调 / 假 console.info / 空 try-catch 一律 FAIL（完整定义见 agent-prompts/1-converter.md）。
 - 返回报告 `failed_stubs`（stub 无法展开清单，与编译无关——converter 禁止自行编译）必须为空才 PASS。
 
@@ -180,10 +180,10 @@ Stage 1 **全部 Batch 完成后**（§3d 收口第一步）一次性执行：�
 
 本批所有并发 converter 完成后，派**一个**Batch 收尾 subagent（**`a2h-closer`，mode=batch**——收尾协议单源固化于 agent 定义；派发参数模板 **MUST 加载** [references/agent-prompts/2-batch-closer.md](./references/agent-prompts/2-batch-closer.md) + [_common.md](./references/agent-prompts/_common.md)）。该 subagent 是本批 **brief 与账本变更的唯一作者 + 资源残量兜底者**（converter 已按 `_common.md` 直写纪律 append 资源键；收尾只补漏不重写），依次串行两步（**批内无编译**——页面间零编译依赖，统一编译在 §3d 收口）：
 
-1. **资源 sweep（残量兜底，只读校验为主）**：grep 本批生成/改动的 .ets 全部静态 `$r('app.<type>.<name>')` 引用（**完整性来自 grep 穷举，不依赖 converter 申报**），与 `resources/` 比对解析性 → 仍缺失的（converter 直写漏网），调 `android2hmos-resources-convert` 扫 Android 源补齐 → 仍无源写 `MISSING_xxx`（复用 Stage 0 契约）。
+1. **资源 sweep（残量兜底，只读校验为主）**：grep 本批生成/改动的 .ets 全部静态 `$r('app.<type>.<name>')` 引用（**完整性来自 grep 穷举，不依赖 converter 申报**），与 `resources/` 比对解析性 → 仍缺失的（converter 直写漏网），调 `ios-resources-convert` 扫 iOS 源补齐 → 仍无源写 `MISSING_xxx`（复用 Stage 0 契约）。
 2. **产 writeback manifest**：本批页 `pending → converted` 记入 manifest（结算即翻——converted = 转换产出完成，编译验证在 verified 轴）；起草 batch brief 全文（schema 见 [references/brief-schemas.md §1](./references/brief-schemas.md)，只写结构化字段）+ 账本翻转集合，一次写 `spec/execution/writeback/writeback-batch-NN.json`（schema：brief-schemas §4）后 return——closer turn 内**不直写** brief / 账本。
 
-**域巡检波（批/组收口后无条件，与后续施工并行）**：`apply_writeback` 成功时会**直接打印本批的巡检派发指令**（agent/task_name/考卷/落单路径）——照打印的指令立即执行，这不是可选建议；凭证缺失会被 binding_gate 的 patrol-receipt 检查判 FAIL。协议全文按 [references/patrol-routing.md](./references/patrol-routing.md) 路由表**立即后台派发**域巡检 agent（考卷=writeback 文件闭集+安卓真值锚点；派发模板 MUST 加载 [agent-prompts/9-patrol.md](./references/agent-prompts/9-patrol.md)）。巡检只读、与施工零竞态；**join 硬点=本批 converted→verified 翻转前**；findings→1 轮修复→机械闸复验→清零才翻 verified，未清记债转 FV 审计段，流水线不等；悬挂句柄按 join 协议条款②处置。设计依据与墙钟分析（全并行，暴露仅末批尾巴）见 patrol-routing.md。
+**域巡检波（批/组收口后无条件，与后续施工并行）**：`apply_writeback` 成功时会**直接打印本批的巡检派发指令**（agent/task_name/考卷/落单路径）——照打印的指令立即执行，这不是可选建议；凭证缺失会被 binding_gate 的 patrol-receipt 检查判 FAIL。协议全文按 [references/patrol-routing.md](./references/patrol-routing.md) 路由表**立即后台派发**域巡检 agent（考卷=writeback 文件闭集+iOS真值锚点；派发模板 MUST 加载 [agent-prompts/9-patrol.md](./references/agent-prompts/9-patrol.md)）。巡检只读、与施工零竞态；**join 硬点=本批 converted→verified 翻转前**；findings→1 轮修复→机械闸复验→清零才翻 verified，未清记债转 FV 审计段，流水线不等；悬挂句柄按 join 协议条款②处置。设计依据与墙钟分析（全并行，暴露仅末批尾巴）见 patrol-routing.md。
 
 **writeback 协议（四模式通用，§4e/§5e/§6 同此）**：closer 返回后主线程跑 `python <a2h-execute>/scripts/apply_writeback.py <manifest> --project-root .`——确定性落盘 brief + 翻账本（registry / ui-manifest / feature-index），幂等可重放；**崩溃恢复 = manifest 在则重跑 apply，绝不重做接线/编译/结构**。closer 仍是全部账本变更与 brief 的**唯一作者**，脚本只是落盘手。
 
@@ -285,7 +285,7 @@ Stage 3 读取 `feature-plan.md` 的 Slice 任务，按拓扑排序逐功能执�
 | status | 处置 |
 |---|---|
 | `converted` | 确认 .ets 存在，**不跳过 Slice**（接线移交 Step 3d——整体跳过是孤儿 VM 根因之一） |
-| `pending` / 不在 ui-plan | ui-snapshots 存在 → 调 a2h-activity-converter；缺失 → 触发 §7 Phase A 按需模式；转换后 status→converted + 派 hmos-builder（STAGE_HINT=stage-3-slice-{name}）验证 |
+| `pending` / 不在 ui-plan | ui-snapshots 存在 → 调 a2h-ios-converter；缺失 → 触发 §7 Phase A 按需模式；转换后 status→converted + 派 hmos-builder（STAGE_HINT=stage-3-slice-{name}）验证 |
 | `verified` | 跳过 |
 
 UI 补充必须引用 Base-6 公共组件库（Design Tokens + 共享组件）。worker 同时承担 `forward-ref-uncertain` 二次审视（返回 `uncertain_regions_resolved[]/retained[]`，主线程据此更新 registry）——完整流程与占位禁令 **MUST 加载** [references/agent-prompts/4-step3a-ui.md](./references/agent-prompts/4-step3a-ui.md) + [_common.md](./references/agent-prompts/_common.md) 作为派发模板，不得简化为 body 摘要。
@@ -293,7 +293,7 @@ UI 补充必须引用 Base-6 公共组件库（Design Tokens + 共享组件）�
 ### 5c. Step 3b: ViewModel + 状态管理（C7 三段式）
 
 <HARD-GATE>
-生成本切片 ViewModel。**complex 强制三段式**（源码理解 → 差异清单 → 实现，一次调用），simple 仅第三段；**anchors 经 `android_source_anchors_ref.source` 读 spec**（grep-first 定点消费，不整读源文件）；spec 已有『源码 5-role 摘要』时第一段只核对 + 产差异清单，source-notes.md 仅含差异清单；complex 必产 `spec/execution/source-understanding/{slice}-source-notes.md`。三段各自的判据（9-role 摘要含类名否则 FAIL / 二型锚点 `源:`·`决:` 落点规则 / `[真机]` 不豁免实现）**MUST 加载** [references/agent-prompts/5-step3b-vm.md](./references/agent-prompts/5-step3b-vm.md) + [_common.md](./references/agent-prompts/_common.md) 作为派发模板，不得简化为 body 摘要。
+生成本切片 ViewModel。**complex 强制三段式**（源码理解 → 差异清单 → 实现，一次调用），simple 仅第三段；**anchors 经 `source_anchors_ref.source` 读 spec**（grep-first 定点消费，不整读源文件）；spec 已有『源码 5-role 摘要』时第一段只核对 + 产差异清单，source-notes.md 仅含差异清单；complex 必产 `spec/execution/source-understanding/{slice}-source-notes.md`。三段各自的判据（9-role 摘要含类名否则 FAIL / 二型锚点 `源:`·`决:` 落点规则 / `[真机]` 不豁免实现）**MUST 加载** [references/agent-prompts/5-step3b-vm.md](./references/agent-prompts/5-step3b-vm.md) + [_common.md](./references/agent-prompts/_common.md) 作为派发模板，不得简化为 body 摘要。
 </HARD-GATE>
 
 ### 5d. Step 3c: 数据层接入
@@ -336,7 +336,7 @@ Stage 3 全部 group brief 落地 + §5f 统计输出后，派 **`a2h-closer`（
 - `spec/execution/autofix-log/round-<R>/loops-final-structural-closure.json` — `final_state == PASS`（arkts-structural-closure finalize 产出）
 - `spec/execution/briefs/final_structural_closure_brief.md` — 嵌入 loops.pipeline 段
 
-CONVERGED + evidence 就位 → FV-1 完成。CONTINUE 按 dispatch_prompt 派 repair worker（feat → `a2h-migration-worker` / ui → `a2h-activity-converter`）后重调；其他 verdict 处置见 skill 自身 SKILL.md §3.3。
+CONVERGED + evidence 就位 → FV-1 完成。CONTINUE 按 dispatch_prompt 派 repair worker（feat → `a2h-migration-worker` / ui → `a2h-ios-converter`）后重调；其他 verdict 处置见 skill 自身 SKILL.md §3.3。
 
 **FV-2 终态全量编译**：FV-1 通过后（其 fix-forward / repair / icon-sizing 自愈可能改码），派发 Codex 子代理 `hmos-builder`（定义于 `.codex/agents/hmos-builder.toml`；CALLER=a2h-execute, STAGE_HINT=fv-final-build，≤20 轮）确认可构建无回归——这是进 a2h-verify 前的最后 gate。**必须为真实构建**：`all tasks up-to-date` 秒级空转不构成 PASS 证据，命中则 touch 入口文件或动用本轮唯一 clean 强制重编（中间 closer 保持增量，发布门较真）。编译修复仅限编译级小改，**不回跑 FV-1**。
 
@@ -355,7 +355,7 @@ Stage 3 Step 3a 发现目标页面 ui-snapshots 数据缺失（status 非 conver
 ### 8a. 主路径：plan 标注（三层承载）
 
 - **Base / FV 任务**：读 base-plan.md / 索引 stanza 的 `suggested_skills:`。
-- **Slice 4 步默认映射**：3a=`a2h-activity-converter` / 3b=`arkts-state-manager` / 3c=`arkts-data-layer` / 3d=closer 链（权威在 a2h-plan §4 表 + agent-prompts 模板绑定，plan 不复述）。
+- **Slice 4 步默认映射**：3a=`a2h-ios-converter` / 3b=`arkts-state-manager` / 3c=`arkts-data-layer` / 3d=closer 链（权威在 a2h-plan §4 表 + agent-prompts 模板绑定，plan 不复述）。
 - **Slice 差异化增量**：slice 文件 Step 行 `suggested_skills+:` 字段（plan 期语义判断的确定性产出）——**必须并入派发**。
 
 ### 8b. 覆盖 / 注入 / 降级
@@ -475,14 +475,6 @@ python3 scripts/lint_execute_coverage.py --project-root $PROJECT_ROOT
 
 ---
 
-## 收尾：上报本阶段用量
+## 阶段证据
 
-本 skill 的最后一步（无论经 `$a2h-run` 还是单独触发都要做）：
-
-```bash
-.migbot/bin/a2h mark-stage a2h-execute
-```
-
-标记 `a2h-execute` 阶段水位（写 stage-marks fact + sentinel，受授权门控、尽力而为）。token 用量由生命周期 hook 上传的会话记录在服务端解析得出，本步不采集。**忽略退出码，绝不阻断。**
-
----
+将真实产物、源/目标版本、校验命令与结果写本阶段报告；状态以证据为准。无需遥测上传。

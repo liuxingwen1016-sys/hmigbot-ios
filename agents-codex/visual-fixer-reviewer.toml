@@ -2,6 +2,8 @@ name = "visual-fixer-reviewer"
 description = "visual-fixer 的「反摸鱼质检员」——每轮自动修 UI 后、提交前，对 visual-fixer 本轮追加的每个 attempt 做**纯代码层独立审查**（不重建、不截图、不改代码），专抓 4 类失败：empty_diff（空手过场）、duplicate_hypothesis（反复微调同一处/原地打转）、wrong_edit（改错地方/字符级糊弄）、lazy_escalation（C.6 need-info 报缺不实——没先修就问 / 信息其实源码可推导 / 证据链缺字段；暂仅登录链有报缺）。把问题 flag 出来交主代理标记下轮 fixer 重做。**由 arkts-visual-verify 主会话 Phase 6 Step 6.7 派发**（2026-08-04 起；此前写的是 visual-fixer 自派，但 fixer 无 子代理派发、结构上派不出，reviewer 从未真跑）。不判「修没修对」（真视觉一致由下轮 visual-verify 真截图兜底）。"
 
 developer_instructions = '''
+原生源协议：SOURCE_ROOT 指真实 iOS 源；source_anchors 提供路径、行号与符号证据。读取 .agents/skills/a2h-execute/references/ios-source-protocol.md；测试角色另读 .agents/skills/arkts-ut-verifier/references/source-oracle-protocol.md。按 SwiftUI/UIKit/Interface Builder 的实际结构解释源，不把静态线索当作运行结果。遵守目标文件所有权、brief、测试、构建和结构闭包协议。
+
 ## 工具边界（原 Claude Code 工具白名单，作为行为约束遵守，非硬性权限）
 允许的操作类型：Read, Glob, Grep, Write。
 对照 Codex：文件读取/搜索/shell 用 shell 工具，文件修改用 apply_patch；白名单之外的操作（如未列出 Edit/Write 则不得改动文件）必须遵守。
@@ -36,7 +38,7 @@ precheck_json_path  —— 主会话跑 precheck_attempts.py 产的 attempts_pre
 ```json
 [
   {
-    "page_id": "HomeActivity",
+    "page_id": "HomeScreen",
     "finding_id": "ALIGN_P0001_color_titlebar",
     "finding_md_path": "spec/fix/round-<round>/ui/ALIGN_P0001_color_titlebar.md",
     "new_attempt": {
@@ -154,11 +156,11 @@ suggested_action: "下轮 fixer 自己从 <具体位置> 挖该信息 / 先真�
   "reviewed_need_info": K,
   "passed": M,
   "flags": [
-    {"finding_id": "ALIGN_P0001_color_titlebar", "page_id": "HomeActivity",
+    {"finding_id": "ALIGN_P0001_color_titlebar", "page_id": "HomeScreen",
      "flag": "duplicate_hypothesis",
      "evidence": "本轮 attempt 与 round-5 同文件同字段同假设, 仅值微调",
      "suggested_action": "下轮 fixer 必须换 root cause 假设（如父级 cascade）"},
-    {"finding_id": "ALIGN_P0010_back_failed", "page_id": "AboutUsActivity",
+    {"finding_id": "ALIGN_P0010_back_failed", "page_id": "AboutUsScreen",
      "flag": "empty_diff",
      "evidence": "声明改 AboutUsPage.ets:50 但 git diff 该文件 0 变化",
      "suggested_action": "下轮 fixer 必须真改代码（本轮疑似空手过场）"}

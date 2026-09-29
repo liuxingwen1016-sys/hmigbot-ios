@@ -1,6 +1,6 @@
 ---
 name: a2h-retrospect
-description: 第五步：回顾本轮迁移，沉淀经验，优化 skill。分析 plan vs 实际差异，提取确定性修正和设计决策。双 Pipeline 经验对比。即使用户只说"回顾"或"优化"，也应触发。
+description: "第五步：回顾本轮迁移，沉淀经验，优化 skill。分析 plan vs 实际差异，提取确定性修正和设计决策。双 Pipeline 经验对比。即使用户只说\"回顾\"或\"优化\"，也应触发。"
 metadata:
   type: pipeline
   domain: migration
@@ -8,6 +8,8 @@ metadata:
   - pipeline
   - migration
 ---
+
+
 # a2h-retrospect
 
 ## 1. 定位
@@ -77,11 +79,11 @@ a2h-spec → a2h-plan → a2h-execute → a2h-verify → a2h-retrospect（本 sk
 | 编译错误 pattern | `hmos-fix-build-errors` | `references/known-patterns.md` |
 | API 映射 / 导入路径修正 | `arkts-knowledge-verifier` | `references/api-corrections.md` |
 | Symbol 验证 | `arkts-knowledge-verifier` | `references/verified-symbols.md` |
-| 资源映射修正 | `android2hmos-resources-convert` | `references/` 对应文件 |
+| 资源映射修正 | `ios-resources-convert` | `references/` 对应文件 |
 | 组件映射修正 | `arkts-component-builder` | `references/` 对应文件 |
 | App 身份配置修正 | `arkts-app-identity` | `references/` 对应文件 |
 | UI 模式修正 | `arkts-pattern-library` | `references/` 对应文件 |
-| spec 欠规约 / 覆盖判定缺口 | `a2h-spec` | `score_complexity.py` 的 `D` 校准、tier 阈值、C4.6b skip-list 规则（仅确定性修正写入，否则降级 Staged Patch）|
+| spec 欠规约 / 覆盖判定缺口 | `a2h-spec` | 原生语义维度、源文件处置、独立 AC 真值及有证据的 skip-list 规则（仅确定性修正写入，否则降级 Staged Patch）|
 
 **Staged Patch（降级路径）**：生成 `.patch` 到 `.agents/skills/<target>/references/`，命名 `<date>-<brief>.patch`，报告标 PENDING_REVIEW 等用户审核。
 
@@ -103,13 +105,13 @@ a2h-spec → a2h-plan → a2h-execute → a2h-verify → a2h-retrospect（本 sk
   │   示例: "LazyForEach 性能优于 ForEach，大列表场景始终使用 LazyForEach"
   │
   ├─ Skill 覆盖率分析中的 OVERRIDE 原因 → 写入 feedback memory
-  │   示例: "有 Android 源码时，dispatcher 比直接调 component-builder 质量更高"
+  │   示例: "有 iOS 源码时，dispatcher 比直接调 component-builder 质量更高"
   │
   ├─ 双 Pipeline 对比结论 → 写入 feedback memory
   │   示例: "Stage 1 direct conversion produces better UI than Stage 3 re-creation"
   │
   └─ Confidence 准确度发现 → 写入 project memory
-      示例: "confidence:medium pages with complete layout XML converted well"
+      示例: "pages with complete source layout and state evidence converted well"
 ```
 
 每个记忆文件遵循 frontmatter + 正文的结构（frontmatter 至少含 name / description / type）。
@@ -192,7 +194,6 @@ a2h-retrospect 是**经验沉淀层**，只读取产出做分析、**不调用**
 
 **步骤说明**
 
-- **#1** `count-lines` 产出 Android / HarmonyOS 两侧按文件类型的行数，并记录 `android_app_name` / `harmonyos_app_name`。其中 `file_type:"total"` 为**核心代码行数**——仅累加源码与 UI/资源（`.java/.kt/.xml/.ets/.ts/.arkt/.proto`），已排除构建/依赖配置（`gradle/kts/properties/json/yaml/yml`）与文档（`.md/.txt` 本就不在统计列表内）；各配置类型仍保留独立的 per-type 记录，仅不计入 `total`。
 - **#2** `mark-stage a2h-retrospect` 写出本阶段的 stage-marks fact，并落下 `.migbot/metrics/<project>/retrospect.done` sentinel（命令会剥掉 `a2h-` 前缀）——**这个 sentinel 就是 `$a2h-run` 用来判定 retrospect 阶段完成的 marker**。受授权门控、尽力而为，忽略退出码、绝不阻断。
 
 ---

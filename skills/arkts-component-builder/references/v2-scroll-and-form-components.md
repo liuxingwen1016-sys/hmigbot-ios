@@ -75,7 +75,7 @@ struct RefreshDemo {
 
 ### 3.5 嵌套滚动 nestedScroll —— 内层可滚动嵌在外层滚/滑容器里（手势优先级）
 
-**何时必须配**：当一个可滚动组件（List / Scroll / Grid / WaterFlow）**嵌在另一个会滚动或翻页的容器里**（Swiper / Tabs / 外层 Scroll / 父 List），且希望**内层先响应手势**时，内层必须显式设 `.nestedScroll(...)`。Android 会自动分发触摸手势，HarmonyOS 不会——不配则**外层容器直接吃掉内层滚动手势**（例：Swiper 内嵌横向 List，横滑会翻页而不是滚 List）。
+**何时必须配**：当一个可滚动组件（List / Scroll / Grid / WaterFlow）**嵌在另一个会滚动或翻页的容器里**（Swiper / Tabs / 外层 Scroll / 父 List），且希望**内层先响应手势**时，内层必须显式设 `.nestedScroll(...)`。iOS 会自动分发触摸手势，HarmonyOS 不会——不配则**外层容器直接吃掉内层滚动手势**（例：Swiper 内嵌横向 List，横滑会翻页而不是滚 List）。
 
 ```typescript
 // 内层横向 List 嵌在外层 Swiper 里：让 List 先横滑，滑到边缘再交给 Swiper 翻页

@@ -188,7 +188,7 @@ canonical writer 只消费最终 `case-outcomes.json` 的 RED/ERROR/BLOCKED_BY_N
 
 | `kind` | 含义 | 是否形成独立产品失败 |
 |---|---|---|
-| `RED` | 已通过真实执行形成有效产品判定，或Android 行为与鸿蒙静态源码证据确认 Android 源码确认要求的入口、目标 landmark 或页内业务能力完全未实现 | 仅当 `failure_class` 为 NAVIGATION/FUNCTION/IMPL_MISSING |
+| `RED` | 已通过真实执行形成有效产品判定，或iOS 行为与鸿蒙静态源码证据确认 iOS 源码确认要求的入口、目标 landmark 或页内业务能力完全未实现 | 仅当 `failure_class` 为 NAVIGATION/FUNCTION/IMPL_MISSING |
 | `ERROR` | 本轮没有形成有效产品判定，例如测试 setup、环境、无 UI 观察面 | 否；先按 `failure_class` 路由 |
 | `BLOCKED_BY_NAVIGATION` | canonical 导航首因已失败，本功能用例未执行其功能操作与断言 | 否；聚合到 `blocked_by` |
 

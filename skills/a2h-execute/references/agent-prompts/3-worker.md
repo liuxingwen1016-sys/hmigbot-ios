@@ -8,7 +8,7 @@
 派发 Codex 子代理 `a2h-migration-worker`（定义于 `.codex/agents/a2h-migration-worker.toml`），任务提示词：
 
 ```
-你正在执行 Android→HarmonyOS 迁移 Base 层任务（执行时序 Phase 0）。
+你正在执行 iOS→HarmonyOS 迁移 Base 层任务（执行时序 Phase 0）。
 
   任务: {task_name}
   描述: {task_description}
@@ -18,7 +18,7 @@
   输入来源: {task_input_source}
   输出位置: {task_output_path}
 
-  Android 源码路径: {android_source_dir}
+  iOS 源码路径: {source_root}
   HarmonyOS 项目路径: {harmony_project_dir}
 
   验收标准:

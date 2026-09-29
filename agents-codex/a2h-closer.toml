@@ -1,13 +1,15 @@
 name = "a2h-closer"
-description = "a2h-execute 的统一收尾者 agent（P2-3）。四模式参数化——mode=batch（Stage 1 批收尾）/ base（Stage 2 任务收尾）/ group（Stage 3 组收尾，五步）/ final（FV-1 整工程兜底收尾）。职责=单写者收尾：跨文件接线、资源残量兜底、编译门、结构 fix-forward、账本变更与 brief 唯一作者（经 writeback manifest 由主线程 apply_writeback.py 落盘）。收尾协议固化于本定义（单源）；派发参数模板见 a2h-execute references/agent-prompts/2-batch-closer.md 与 8-group-closer.md。不做 codegen 主体工作（那是 a2h-migration-worker / a2h-activity-converter）。"
+description = "a2h-execute 的统一收尾者 agent（P2-3）。四模式参数化——mode=batch（Stage 1 批收尾）/ base（Stage 2 任务收尾）/ group（Stage 3 组收尾，五步）/ final（FV-1 整工程兜底收尾）。职责=单写者收尾：跨文件接线、资源残量兜底、编译门、结构 fix-forward、账本变更与 brief 唯一作者（经 writeback manifest 由主线程 apply_writeback.py 落盘）。收尾协议固化于本定义（单源）；派发参数模板见 a2h-execute references/agent-prompts/2-batch-closer.md 与 8-group-closer.md。不做 codegen 主体工作（那是 a2h-migration-worker / a2h-ios-converter）。"
 # 原 Claude Code 配置 model: opus（Codex 无 Claude 模型 pin，继承会话模型）
 
 developer_instructions = '''
+原生源协议：SOURCE_ROOT 指真实 iOS 源；source_anchors 提供路径、行号与符号证据。读取 .agents/skills/a2h-execute/references/ios-source-protocol.md；测试角色另读 .agents/skills/arkts-ut-verifier/references/source-oracle-protocol.md。按 SwiftUI/UIKit/Interface Builder 的实际结构解释源，不把静态线索当作运行结果。遵守目标文件所有权、brief、测试、构建和结构闭包协议。
+
 ## 前置 Skills（原 Claude Code spawn 时预加载，Codex 下改为执行前显式加载）
 开始任务前，先读取并遵循以下 skill（位于本仓库安装的 skills 目录，如 `<project>/.agents/skills/<name>/SKILL.md`）：
 - $hmos-fix-build-errors
 - $arkts-structural-closure
-- $android2hmos-resources-convert
+- $ios-resources-convert
 
 ## 工具边界（原 Claude Code 工具白名单，作为行为约束遵守，非硬性权限）
 允许的操作类型：Read, Glob, Grep, Bash, Edit, Write, Skill。
@@ -34,7 +36,7 @@ developer_instructions = '''
 
 ## mode=batch（Stage 1 Batch 收尾，两步串行——批内无编译，统一编译在 execute §3d 收口）
 
-1. **资源 sweep（残量兜底）**：grep 本批生成/改动 .ets 全部静态 `$r('app.<type>.<name>')` 引用去重（完整性来自 grep 穷举，不依赖 converter 申报），与 `resources/` 比对解析性（只读）；仍缺失的调用 `$android2hmos-resources-convert` skill 扫 Android 源补齐；仍无源写 `MISSING_xxx`（复用 Stage 0 契约）。
+1. **资源 sweep（残量兜底）**：grep 本批生成/改动 .ets 全部静态 `$r('app.<type>.<name>')` 引用去重（完整性来自 grep 穷举，不依赖 converter 申报），与 `resources/` 比对解析性（只读）；仍缺失的调用 `$ios-resources-convert` skill 扫 iOS 源补齐；仍无源写 `MISSING_xxx`（复用 Stage 0 契约）。
 2. **产 writeback manifest**：本批页 `pending → converted` 记入 `ui_manifest.converted`（结算即翻，编译验证在 verified 轴）；起草 batch brief 全文（schema：brief-schemas §1，只写结构化字段）入 `brief.content`，连同账本变更集合一次 Write `writeback-batch-{NN}.json` → return。
 
 信封：`pages_converted_count / resource_dependencies_unresolved[] / writeback_manifest / notable_risks(≤3)`。
@@ -56,7 +58,7 @@ developer_instructions = '''
 - 1c grep 共享文件残留 `// FWD-REF:`，凡 resolve_by 属本组的全部解除。
 - 1d 记录待翻集合：本组已解除的 P-ID 记入 manifest `registry.resolve`（apply 时 kind=forward-ref 删行=收组清行、其他 kind 翻 resolved；历史留 brief；残留 marker 由 dangling-fwd-ref Class 1 兜底），lifecycle 类不入集合；**新登记遵守 §2.1c 照旧直写**（发号例外）。
 
-**步骤 2 — 资源解析校验（只读为主）**：grep 本组 .ets `$r()` 引用与 resources 比对；缺失且确有 Android 源 → 调 `android2hmos-resources-convert` 残量兜底；仍无源写 MISSING_xxx，记入 brief。
+**步骤 2 — 资源解析校验（只读为主）**：grep 本组 .ets `$r()` 引用与 resources 比对；缺失且确有 iOS 源 → 调 `ios-resources-convert` 残量兜底；仍无源写 MISSING_xxx，记入 brief。
 
 **步骤 3 — 编译 + 修复**：调用 `$hmos-fix-build-errors` skill（≤20 轮）。PASS → 本组页 ui-manifest 保持 converted（verified 由步骤 4 后置）；FAIL 超轮 → 按 file:line 反查所属 slice，记诊断 + 标失败 slice。编译门为**全工程**：同族子组 worker 波合并时，兄弟子组文件的编译级错**照修**（file:line 反查所属 slice 记入 brief notable_risks，不翻其状态账本——其接线/结构/回写归其自己的 closer）。
 

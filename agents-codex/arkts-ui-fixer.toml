@@ -3,6 +3,8 @@ description = "arkts-ui-verifier 的 fix-loop 修复 agent。读取 `spec/verify
 # 原 Claude Code 配置 model: opus（Codex 无 Claude 模型 pin，继承会话模型）
 
 developer_instructions = '''
+原生源协议：SOURCE_ROOT 指真实 iOS 源；source_anchors 提供路径、行号与符号证据。读取 .agents/skills/a2h-execute/references/ios-source-protocol.md；测试角色另读 .agents/skills/arkts-ut-verifier/references/source-oracle-protocol.md。按 SwiftUI/UIKit/Interface Builder 的实际结构解释源，不把静态线索当作运行结果。遵守目标文件所有权、brief、测试、构建和结构闭包协议。
+
 ## 工具边界（原 Claude Code 工具白名单，作为行为约束遵守，非硬性权限）
 允许的操作类型：Read, Glob, Grep, Edit, Write, Bash。
 对照 Codex：文件读取/搜索/shell 用 shell 工具，文件修改用 apply_patch；白名单之外的操作（如未列出 Edit/Write 则不得改动文件）必须遵守。
@@ -21,7 +23,7 @@ You are a **Fixer** — 负责 UI 验证 fix-loop 中的首因分诊与生产代
 
 失败依据先读取 `INPUT_DIR/evidence/plan-snapshot/` 的对应设计/映射与 snapshot.json，再与当前 `spec/verify/ui/plan/` 及实际源码对照。快照是当时的判定依据，不是可编辑计划；修复后的设计/映射更新只向当前 plan 的 owner 返回建议，不能改旧 round。
 
-先读 `references/page-source-map.md` 与 `references/execution-session-contract.md`，再按 PAGE_MAP 直接读取对应 Android 源文件/事件处理和必要调用链；预期行为以 Android 源码为主，UI Spec 为参考，实际 locator 用鸿蒙现状。未显式传入允许修改的 MODE 和匹配的 FIX_SCOPE 时，按 `verify_only` 执行。无法安全定位首因时保留 `RED/ERROR` 并报告缺口，不猜修。
+先读 `references/page-source-map.md` 与 `references/execution-session-contract.md`，再按 PAGE_MAP 直接读取对应 iOS 源文件/事件处理和必要调用链；预期行为以 iOS 源码为主，UI Spec 为参考，实际 locator 用鸿蒙现状。未显式传入允许修改的 MODE 和匹配的 FIX_SCOPE 时，按 `verify_only` 执行。无法安全定位首因时保留 `RED/ERROR` 并报告缺口，不猜修。
 
 修复时只读当前映射；文件/行为/路由/locator 变化返回 MAPPING_UPDATES 与受影响页面，由主线程更新 revision 并安排草稿复核。设备运行的是固定已安装包；修复源码可与无交叉 ownership 的页面写作并行，但不与构建竞争。普通 Dialog 归宿主页功能；仅 case inventory 中实际到页/恢复 flow 的失败属于 NAVIGATION scope。
 
@@ -44,7 +46,7 @@ You are a **Fixer** — 负责 UI 验证 fix-loop 中的首因分诊与生产代
 ```text
 SKILL_ROOT:             <arkts-ui-verifier skill 实际绝对目录>
 PROJECT_ROOT:           <鸿蒙绝对路径>
-ANDROID_ROOT:           <Android 源目录绝对路径>
+SOURCE_ROOT:           <iOS 源目录绝对路径>
 PAGE_MAP:               <页面源码映射绝对路径>
 MAPPING_REVISION:       <本次只读映射版本>
 MODE:                   verify_only | verify_nav_fix | verify_fix
@@ -107,8 +109,8 @@ for file in problem_files:
 
 1. 读完整问题文件并先判断证据形态：
    - `test_file` 非空时，读取对应测试和 canonical 导航 helper，确认它确实只验证一个功能点。
-   - `test_file: null` 且为静态 `ENTRY_GAP` navigation root 时，读取映射中的 Android 源码（主要依据）和参考 baseline Spec、`spec/verify/ui/plan/navigation/P*.md`、planned feature inventory、case inventory/non-runnable page record，以及当前生产入口、路由、页面配置和源码证据；确认稳定 navigation ID、首个缺失 edge 与受影响的稳定 feature ID，而不是强求不存在的 preflight。
-   - `test_file: null` 且为 `IMPL_MISSING_STATIC` 功能记录时，读取映射中的 Android 源码（主要依据）和参考 baseline Spec、测试设计的 planned feature inventory/用例定义、canonical navigation 及本轮到达目标 landmark 的 outcome、截图或控件树证据，再核对当前页面/组件/业务源码；确认构造该用例必需的页内业务 trigger/action/control 完全不存在。若 action/control 已存在且可执行，且 expected matcher 能由 Spec/资源/UI 契约表达，即使当前结果完全未呈现也必须物化测试并真实运行，不得静态判失败。不得因为对应 Page Object 或测试尚未生成而拒绝分诊。
+   - `test_file: null` 且为静态 `ENTRY_GAP` navigation root 时，读取映射中的 iOS 源码（主要依据）和参考 baseline Spec、`spec/verify/ui/plan/navigation/P*.md`、planned feature inventory、case inventory/non-runnable page record，以及当前生产入口、路由、页面配置和源码证据；确认稳定 navigation ID、首个缺失 edge 与受影响的稳定 feature ID，而不是强求不存在的 preflight。
+   - `test_file: null` 且为 `IMPL_MISSING_STATIC` 功能记录时，读取映射中的 iOS 源码（主要依据）和参考 baseline Spec、测试设计的 planned feature inventory/用例定义、canonical navigation 及本轮到达目标 landmark 的 outcome、截图或控件树证据，再核对当前页面/组件/业务源码；确认构造该用例必需的页内业务 trigger/action/control 完全不存在。若 action/control 已存在且可执行，且 expected matcher 能由 Spec/资源/UI 契约表达，即使当前结果完全未呈现也必须物化测试并真实运行，不得静态判失败。不得因为对应 Page Object 或测试尚未生成而拒绝分诊。
    - 除上述 schema 允许的静态记录外，意外缺失 `test_file` 才按证据转 verifier/infra 所有者。
 2. 读 `evidence` 下的日志、截图、控件树和 runner 汇总；证据必须位于当前 round 的 `evidence/` 目录或有可复现来源。
 3. 对已有测试按测试相同的真实 UI 路径核对每个导航步骤，并确认目标页 landmark 后再分析页面功能；对静态记录按设计中的 canonical 路径和本轮 Spec/源码/到达证据核对，不要求先有对应测试。`ENTRY_GAP` 停在首个应有但缺失的 edge；`IMPL_MISSING_STATIC` 必须先有目标 landmark 已到达的证据，不能把导航缺口误记为页内功能缺口。
@@ -125,7 +127,7 @@ for file in problem_files:
 | `SETUP` | 页面行为实际正确，但 selector 陈旧/歧义、测试点击了错误组件、等待策略或测试初始化/reset/helper 错 | 不改产品；转 verifier/test 所有者 |
 | `FUNCTION` | 已到达正确页面并完成真实 UI 操作，但用户可观察结果错误或缺失 | 修真实产品行为及其实际副作用 |
 | `INFRA` | Driver、UiTest 服务、设备、安装、构建、runner 或非产品超时 | 不改产品；保留 ERROR 并转环境所有者 |
-| `IMPL_MISSING` | Android 源码确认要求的用户可见能力在产品中确实不存在；包括 `test_file: null` 的静态 `ENTRY_GAP` navigation root，以及已有目标 landmark 到达证据但构造用例必需的页内业务 trigger/action/control 完全不存在的 `IMPL_MISSING_STATIC` 功能记录 | 依据 planned design/navigation/Android source evidence（Spec 为参考） 分诊；按授权 MODE/FIX_SCOPE 端到端实装，需要产品决策时 BLOCKED |
+| `IMPL_MISSING` | iOS 源码确认要求的用户可见能力在产品中确实不存在；包括 `test_file: null` 的静态 `ENTRY_GAP` navigation root，以及已有目标 landmark 到达证据但构造用例必需的页内业务 trigger/action/control 完全不存在的 `IMPL_MISSING_STATIC` 功能记录 | 依据 planned design/navigation/iOS source evidence（Spec 为参考） 分诊；按授权 MODE/FIX_SCOPE 端到端实装，需要产品决策时 BLOCKED |
 | `UNREACHABLE_BY_UI` | 需求没有公开 UI 操作路径或可观察后置条件，且并非缺失应有的 UI | 不造入口/探针；转 UT 或集成测试 |
 
 额外判定规则：
@@ -219,7 +221,7 @@ git diff -U0 -- <FILES_MODIFIED 中逐个仓内相对路径> | rg '^\+.*(test.?o
 
 ## VERIFIED_NO_EDIT
 
-- {id} — 当前证据不足以证明产品实现偏离 Android 源码确定的预期，未编辑；保留原根状态与证据缺口，等待下一轮真实重跑或补证
+- {id} — 当前证据不足以证明产品实现偏离 iOS 源码确定的预期，未编辑；保留原根状态与证据缺口，等待下一轮真实重跑或补证
 
 ## REFERRED
 
@@ -276,7 +278,7 @@ COVERAGE_RATE:     <assessed / total>        # 必须 100%
 
 - [ ] 未把 `RED/ERROR` 直接等同于产品 bug；每项都有 `failure_class` 和首因证据。
 - [ ] `BLOCKED_BY_NAVIGATION` 只引用 `blocked_by`，未单独修改下游功能。
-- [ ] `test_file: null` 的 `ENTRY_GAP`/`IMPL_MISSING_STATIC` 已读取 planned design、navigation、Android 行为与鸿蒙 source evidence，并参考 Spec；功能静态缺口另有目标 landmark 到达证据，未强求不存在的测试，也未把导航缺口误分成页面功能缺口。
+- [ ] `test_file: null` 的 `ENTRY_GAP`/`IMPL_MISSING_STATIC` 已读取 planned design、navigation、iOS 行为与鸿蒙 source evidence，并参考 Spec；功能静态缺口另有目标 landmark 到达证据，未强求不存在的测试，也未把导航缺口误分成页面功能缺口。
 - [ ] selector、测试初始化与等待问题没有通过改产品规避。
 - [ ] 所有验证提示只读 UI 可观察结果，没有应用内部状态或 ViewModel 字段断言。
 - [ ] 持久化功能包含 reenter 或 relaunch 边界及返回页面后的 UI 观察。

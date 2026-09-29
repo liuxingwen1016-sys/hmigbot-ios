@@ -186,13 +186,13 @@ RDB/文件遵循同样原则：独占资源、完成事务/flush、关闭 Result
 
 ### 2.6 断言写法与"是否已实装"无关（不写"预期 RED"的弱版本）
 
-设计不预测红绿，生成也**不分**"预期绿 / 预期红"两种写法——**每条可执行用例都写满 Android 已核实行为或明确批准平台差异的强断言**，调用设计核实的
+设计不预测红绿，生成也**不分**"预期绿 / 预期红"两种写法——**每条可执行用例都写满 iOS 已核实行为或明确批准平台差异的强断言**，调用设计核实的
 真实生产入口 + 断言有来源依据的**具体值、状态变化和必要副作用**。Spec 管范围与 AC，不能仅凭概述编预期。源码若是占位，它**自然**会红；实装正确后转绿。这个红绿由第三步
 实跑测量，**不是你预先决定、更不是你为了"让它现在红"而写个最小断言**：
 
 ```typescript
 it('F014_AC06_enter_pip_mode', 0, async () => {
-  // 示例前提：Android 已核验进 PiP 返回 active session；填写实际 oracle path:line，按真实契约补齐必要副作用。
+  // 示例前提：iOS 已核验进 PiP 返回 active session；填写实际 oracle path:line，按真实契约补齐必要副作用。
   const result = await VideoPlaybackController.getInstance().enterPip()
   expect(result).not().assertNull()
   if (result === null || result === undefined) {
@@ -206,7 +206,7 @@ it('F014_AC06_enter_pip_mode', 0, async () => {
 > **反例（禁止）**：因为"看起来没实装"就只写 `expect(result).not().assertNull()` 当作"预期红"，把 `isActive`
 > 等真实契约省掉——这等于把强断言降级成"够检测占位"的最小断言，实装一落地它就变成假绿（非空但内容全错也过）。
 > 无论你以为它实没实装，断言强度**必须一致**。
-> fixer 更新或新增测试也使用同一标准，见 [fixer 测试更新策略](fixer-test-policy.md)。正确原断言优先保留，只有 Android 证据、明确批准差异或测试本身错误支持时才调整预期；不能照着修改后的鸿蒙输出改断言。缺少有效预期时标 `needs_review`、未验证，不用简单测试凑绿。
+> fixer 更新或新增测试也使用同一标准，见 [fixer 测试更新策略](fixer-test-policy.md)。正确原断言优先保留，只有 iOS 证据、明确批准差异或测试本身错误支持时才调整预期；不能照着修改后的鸿蒙输出改断言。缺少有效预期时标 `needs_review`、未验证，不用简单测试凑绿。
 
 ---
 

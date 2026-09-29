@@ -6,9 +6,8 @@
 
 ## 调用准备
 
-传入鸿蒙工程绝对路径、验证范围和已知 Android 源码路径；同时传递当前任务对产品修复的授权范围。各 skill 根目录和内部参数由其自身入口解析，不能套用另一 verifier 的 agent 参数。
+传入鸿蒙工程绝对路径、验证范围和已知 iOS 源码路径；同时传递当前任务对产品修复的授权范围。各 skill 根目录和内部参数由其自身入口解析，不能套用另一 verifier 的 agent 参数。
 
-- CHECK-3 需要 Android 与鸿蒙两端可用设备（adb、hdc）。
 - CHECK-4 需要 hdc 可用；其他输入按各 verifier 要求补齐。
 - 缺设备、必要输入或对应 skill，未启动的该项记 DEFERRED。若已启动且产出构建/安装/执行 ERROR，保留该失败，不改写成未执行。
 - 只验证时明确传递不修产品代码的约束；测试设施准备仍按 verifier 契约执行。修复模式沿用当前任务授权，不扩大到未授权的业务修复。
@@ -35,7 +34,7 @@
 
 ## CHECK-4：单元测试
 
-调用 `arkts-ut-verifier`。默认 `MODE=verify_fix`；任务限定只验证时传 `MODE=verify_only`。Android 源码使用该 skill 的 `ANDROID_SOURCE_ROOT` 入口；缺少源码证据时按其契约继续有依据的验证，明确受影响的未验证点。
+调用 `arkts-ut-verifier`。默认 `MODE=verify_fix`；任务限定只验证时传 `MODE=verify_only`。iOS 源码使用该 skill 的 `SOURCE_ROOT` 入口；缺少源码证据时按其契约继续有依据的验证，明确受影响的未验证点。
 
 读取 `spec/verify/ut/ut-report.md`、`_state.yaml` 和当前轮 `_ut_summary.md`；进入修复循环且已有退出摘要时一并读取 `round-N/final-summary.md`。不要要求 `verify_only` 生成修复循环专属产物。
 

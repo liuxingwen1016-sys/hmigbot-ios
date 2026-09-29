@@ -1,6 +1,6 @@
 ---
 name: arkts-ad
-description: Android 广告 SDK 迁移到 HarmonyOS ArkTS 的全流程指导。识别 Android 项目使用的主流广告三方库（穿山甲 CSJ/Pangle、优量汇 GDT、快手 KS、华为 HMS Ads、百度联盟、GroMore 聚合等），匹配鸿蒙端可用 SDK，引导下载 HAR / ohpm 配置 / module.json5 权限明示与用户选择 / EntryAbility 初始化 / WindowStage 绑定 / API 1:1 适配 / 服务层抽象 / 验证排障。当用户提到"广告 SDK 接入 / 广告库迁移 / 检测广告 SDK / 鸿蒙广告 / Android 广告库迁移 / 穿山甲 / CSJ / Pangle / GroMore / GDT / 优量汇 / KS / 快手广告 / HMS Ads / 华为广告 / 百度联盟 / 开屏 / 插屏 / 信息流 / Banner / 激励视频 / 热启动广告 / Tab 切换广告 / 广告不展示 / HAR / ohpm / WindowStage / init / start / 广告权限 / 广告频控 / 广告隐私"等场景时触发本 skill。
+description: "iOS 广告 SDK 迁移到 HarmonyOS ArkTS 的全流程指导。识别 iOS 项目使用的主流广告三方库（穿山甲 CSJ/Pangle、优量汇 GDT、快手 KS、华为 HMS Ads、百度联盟、GroMore 聚合等），匹配鸿蒙端可用 SDK，引导下载 HAR / ohpm 配置 / module.json5 权限明示与用户选择 / EntryAbility 初始化 / WindowStage 绑定 / 按行为契约适配 / 服务层抽象 / 验证排障。当用户提到\"广告 SDK 接入 / 广告库迁移 / 检测广告 SDK / 鸿蒙广告 / iOS 广告库迁移 / 穿山甲 / CSJ / Pangle / GroMore / GDT / 优量汇 / KS / 快手广告 / HMS Ads / 华为广告 / 百度联盟 / 开屏 / 插屏 / 信息流 / Banner / 激励视频 / 热启动广告 / Tab 切换广告 / 广告不展示 / HAR / ohpm / WindowStage / init / start / 广告权限 / 广告频控 / 广告隐私\"等场景时触发本 skill。"
 metadata:
   type: domain
   domain: system
@@ -18,7 +18,7 @@ metadata:
 ---
 # ArkTS 广告 SDK 迁移
 
-将 Android 广告体系迁移到 HarmonyOS ArkTS 的全流程：detect 识别 → catalog 匹配 → 下载集成（含权限明示与用户选择）→ API 1:1 适配 → 验证排障。
+将 iOS 广告体系迁移到 HarmonyOS ArkTS 的全流程：detect 识别 → catalog 匹配 → 下载集成（含权限明示与用户选择）→ 按行为契约适配 → 验证排障。
 
 本 skill 不是 Fitness 专用 skill。Fitness 项目中的 `TabBarComponent` / `MainPage` / `AdService` / `TabAdController` 等只作为参考范例，不能作为通用前提。
 
@@ -28,7 +28,7 @@ metadata:
 
 - ArkTS / HarmonyOS 广告 SDK 接入或迁移
 - 穿山甲 / CSJ / Pangle / GroMore / 优量汇 / GDT / 快手 / KS / 百度联盟 / HMS Ads / 华为广告
-- Android 广告 SDK 检测 / 识别 / 梳理
+- iOS 广告 SDK 检测 / 识别 / 梳理
 - 开屏 / 热启动 / 插屏 / Tab 切换插屏 / 信息流 / Banner / 激励视频 / 全屏 / Draw / 沉浸式视频
 - 广告不展示 / SDK 初始化失败 / `*.start()` 失败 / HAR 依赖失败 / `ohpm` 解析到错误包 / `load` 回调不触发 / `show` 无反应 / `WindowStage` 缺失 / 广告权限 / 频控规则
 - 出现关键词：`AdService` / `AdController` / `openadsdk` / `adapter_gdt` / `adapter_ks` / `showFullAd` / `WindowStage` 绑定 / 广告频控
@@ -40,7 +40,7 @@ metadata:
 1. 页面和组件不得直接调用三方广告 SDK API。它们必须调用项目自有服务（例如 `AdService`）或项目已有广告抽象层。
 2. 插屏、全屏、激励视频等需要窗口宿主的广告，必须等 Ability 层绑定 `WindowStage` 后再展示。
 3. SDK 初始化和启动/激活步骤是两个独立关口。排查 load/show 失败前必须同时检查通用 init 流程和具体 SDK 的启动/激活流程；例如 CSJ 需要检查 `init()` 和 `CSJAdSdk.start()`。
-4. HarmonyOS 广告位 ID 必须视为平台专属配置，不能直接复用 Android 广告位 ID。
+4. HarmonyOS 广告位 ID 必须视为平台专属配置，不能直接复用 iOS 广告位 ID。
 5. 所有广告失败都必须从用户业务流程角度降级为 no-op：不展示广告，但启动、Tab 切换、列表加载、播放恢复、奖励结算等业务继续。
 6. 不绕过隐私合规。广告相关敏感权限、OAID、跟踪授权、定位能力必须绑定到应用隐私协议同意流程。
 7. **SDK 文档列出的权限不全量加**。每个权限必须经用户在 Stage 2.1 显式确认。默认仅加"必需"项；"可选"项（含设备标识 / OAID / 定位 / Wi-Fi 信息）默认不加，由用户基于业务 + 商务 + 隐私合规权衡。
@@ -51,12 +51,12 @@ metadata:
 修改代码前先收集：
 
 - HarmonyOS 项目根目录
-- Android 源码根目录（用于 Stage 0 detect）
+- iOS 源码根目录（用于 Stage 0 detect）
 - 现有 ArkTS 广告文件（如 `AdService` / `AdController` / `TabAdController` / `AdCardComponent`）
 - 依赖配置文件：根目录 `oh-package.json5` / `entry/oh-package.json5` / `entry/oh-package-lock.json5`
 - HarmonyOS 模块配置：`entry/src/main/module.json5`
 - `entry/libs/` 下已有广告 SDK 库
-- Android 侧广告 SDK 依赖、封装类、初始化入口、广告场景代码、频控代码、上层触发链路
+- iOS 侧广告 SDK 依赖、封装类、初始化入口、广告场景代码、频控代码、上层触发链路
 - 本次变更目标广告场景
 - 是否已有隐私协议流程，以及同意状态存储位置
 
@@ -64,18 +64,17 @@ metadata:
 
 ## Workflow
 
-### Stage 0: Detect — 识别 Android 项目使用的广告 SDK
+### Stage 0: Detect — 识别 iOS 项目使用的广告 SDK
 
-加载 `references/detect-commands.md`，按其中的 4 类扫描命令在 Android 项目根目录跑 grep：
+加载 `references/detect-commands.md`，按其中的 原生依赖与调用核验步骤在 iOS 项目根目录跑 grep：
 
-1. Gradle 依赖扫描（最权威）
 2. SDK init 调用扫描（佐证）
 3. Manifest 权限佐证（弱信号）
 4. ProGuard keep 规则佐证（弱信号）
 
 输出"使用的 SDK 清单"按以下格式：
 
-| Android dep | 命中位置 | 对应 catalog 行 | 状态 |
+| iOS dep | 命中位置 | 对应 catalog 行 | 状态 |
 |---|---|---|---|
 | ... | ... | ... | ... |
 
@@ -205,7 +204,7 @@ UI 组件事件 → 页面级回调 → 场景控制器（频控门禁）→ AdS
 - 本地 HAR 存在，但 `ohpm` 从 adapter 包解析了远端传递依赖
 - 调用了 `init()`，但缺少 `start()`，或 `start()` 失败
 - 绑定 `WindowStage` 前调用了 `showFullAd`
-- 复用了 Android 广告位 ID
+- 复用了 iOS 广告位 ID
 - 页面/组件直接调用 SDK API，绕过服务层降级
 - 频控正常拦截，却被误判为 SDK 失败
 - 隐私协议未同意，因此权限或 SDK 启动路径被有意阻断
@@ -217,7 +216,7 @@ UI 组件事件 → 页面级回调 → 场景控制器（频控门禁）→ AdS
 ## References
 
 - `references/sdk-catalog.md` — 严选 6 SDK 索引表
-- `references/detect-commands.md` — Android 端识别命令清单
+- `references/detect-commands.md` — iOS 端识别命令清单
 - `references/sdk-hms-ads.md` — 华为 HMS Ads
 - `references/sdk-csj.md` — 穿山甲 CSJ / Pangle
 - `references/sdk-gdt.md` — 优量汇 GDT

@@ -275,4 +275,4 @@ function registerFeedUpdateWork(): void {
 **为什么用两种匹配策略**：
 - 大多数播客有 `<guid>` 标签，是最可靠的唯一标识
 - 少数播客没有 `<guid>`，此时用媒体文件的 `download_url` 作为替代标识
-- 这与 Android 版 AntennaPod 的 `FeedItemDuplicateGuesser` 逻辑一致
+- 这与 iOS 版 AntennaPod 的 `FeedItemDuplicateGuesser` 逻辑一致

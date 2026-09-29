@@ -1,6 +1,6 @@
 ---
 name: migbot-increment-workflow
-description: Trigger: `$migbot-increment-workflow` or natural language. 管理 Migbot-Increment(AI native workflow) 工作流，执行 PLANNING → IMPLEMENTING → APPLYING
+description: "Trigger: `$migbot-increment-workflow` or natural language. 管理 Migbot-Increment(AI native workflow) 工作流，执行 PLANNING → IMPLEMENTING → APPLYING"
 ---
 
 > Codex skill (converted from the `migbot-increment-workflow` slash command). Invoke with `$migbot-increment-workflow`, or pick it in `/skills` (the default_prompt below auto-runs). Codex has no custom slash commands, so the `$` prefix replaces `/`.
@@ -62,7 +62,7 @@ $migbot-increment-init 将检查：
 | 功能变更 | Change Requirement | `change`, `变更`, `修改`, `改动`, `调整`, `优化` | `./specs/changes/<YYYYMMDD>-requirement-change-<name>` |
 | 缺陷修复 | Bugfix | `fix`, `bugfix`, `修复`, `解决`, `bug`, `问题`, `错误` | `./specs/changes/<YYYYMMDD>-bugfix-<name>` |
 | 架构优化 | Architecture Refactor | `重构`, `refactor`, `优化架构`, `架构调整`, `重写` | `./specs/changes/<YYYYMMDD>-arch-refactor-<name>` |
-| 平台迁移 | Platform Migration | `migration`, `迁移`, `移植`, `跨平台`, `安卓转鸿蒙` | `./specs/changes/<YYYYMMDD>-platform-migration-<name>` |
+| 平台迁移 | Platform Migration | `migration`, `迁移`, `移植`, `跨平台`, `iOS转鸿蒙` | `./specs/changes/<YYYYMMDD>-platform-migration-<name>` |
 
 如果识别为意图 1，则按照以下模板输出识别结果：
 

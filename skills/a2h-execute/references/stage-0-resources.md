@@ -9,11 +9,11 @@ Stage 0 读取 `feature-plan.md` 的 Base-0 任务，执行资源全集扫描与
 
 ## §3.0a 执行流程
 
-读 `plans/base-plan.md` Base-0（旧 plan 回退 feature-plan.md 旧 Phase 0 段）→ 扫 `spec/baseline/ui/page_*.md` + `features/F-*.md` + `feature-base.md` 全部 `$r('app.*.xxx')` / Lottie 资源名 / asset 引用，去重得资源 ID 全集 → 调 `android2hmos-resources-convert` 批量迁移，缺失资源写 `MISSING_xxx` 占位（编译期暴露）→ 产出 `spec/baseline/plans/resource-mapping.md` → **HARD-GATE**：全部引用可解析或显式 MISSING_xxx 才 PASS 进入 Stage 1，否则阻断 pipeline。
+读 `plans/base-plan.md` Base-0（旧 plan 回退 feature-plan.md 旧 Phase 0 段）→ 扫 `spec/baseline/ui/page_*.md` + `features/F-*.md` + `feature-base.md` 全部 `$r('app.*.xxx')` / Lottie 资源名 / asset 引用，去重得资源 ID 全集 → 调 `ios-resources-convert` 批量迁移，缺失资源写 `MISSING_xxx` 占位（编译期暴露）→ 产出 `spec/baseline/plans/resource-mapping.md` → **HARD-GATE**：全部引用可解析或显式 MISSING_xxx 才 PASS 进入 Stage 1，否则阻断 pipeline。
 
 ## §3.0a-bis 资源层占位登记 HARD-GATE
 
-`android2hmos-resources-convert` 完成后，强制校验：每个 `[TODO: translate]` 占位与每个 fallback 资产引用必须在 `spec/placeholder-registry.md` 有对应 `kind=resource-pending-translation` / `kind=resource-pending-asset` 条目。任一不匹配即 BLOCKED，不允许进 Stage 1。
+`ios-resources-convert` 完成后，强制校验：每个 `[TODO: translate]` 占位与每个 fallback 资产引用必须在 `spec/placeholder-registry.md` 有对应 `kind=resource-pending-translation` / `kind=resource-pending-asset` 条目。任一不匹配即 BLOCKED，不允许进 Stage 1。
 
 校验示例：
 
@@ -35,10 +35,10 @@ arkts-i18n skill 按其『硬编码字符串扫描与迁移』流程：扫 regis
 
 ## §3.0b-bis 落地 App 身份（dev 安全字段，无签名影响）
 
-资源迁移后、进 Stage 1 前，主线程**自动调用** `arkts-app-identity`（**`scope=dev-identity`**）从 Android 源落地 App 身份，消除脚手架默认值（`app_name` 滞留 "MyApplication" / `versionName` 滞留 "1.0.0" 会卡真机识别与 a2h-verify App 身份校验项）：
+资源迁移后、进 Stage 1 前，主线程**自动调用** `arkts-app-identity`（**`scope=dev-identity`**）从 iOS 源落地 App 身份，消除脚手架默认值（`app_name` 滞留 "MyApplication" / `versionName` 滞留 "1.0.0" 会卡真机识别与 a2h-verify App 身份校验项）：
 
 ```
-调用 `$arkts-app-identity` skill（读取 `.agents/skills/arkts-app-identity/SKILL.md` 并按其执行），参数：`scope=dev-identity android_root=<$ANDROID_SRC> feature_base=spec/baseline/feature-base.md`
+调用 `$arkts-app-identity` skill（读取 `.agents/skills/arkts-app-identity/SKILL.md` 并按其执行），参数：`scope=dev-identity source_root=<$SOURCE_ROOT> feature_base=spec/baseline/feature-base.md`
 
 只写 dev 安全字段：`app_name`（label 文本）/ `versionName` / `versionCode` / 图标资源；**不碰 `bundleName` / `vendor`**——二者与签名 / AGC 强绑定属部署期 D-009，dev 阶段写入会致签名装机不一致（保留脚手架占位，部署期再以 `scope=full` 落地）。幂等、不覆盖无关字段。**非阻断**：身份字段非编译必需，`arkts-app-identity` 返回非 0 时写迁移报告 WARN 但不阻断 Stage 1。
 

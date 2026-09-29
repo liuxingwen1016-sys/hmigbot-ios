@@ -1,6 +1,6 @@
 # 自定义 EventBus 实现模板
 
-> 替代 Android 的 greenrobot EventBus，使用 Map<string, Function[]> 实现简单的发布-订阅事件总线。
+> 替代 iOS 的 greenrobot EventBus，使用 Map<string, Function[]> 实现简单的发布-订阅事件总线。
 >
 > **ArkTS V2 lock**：组件示例使用 `@ComponentV2`（V1 legacy: `@Component`）。EventBus 本身是纯 TS class，与装饰器版本无关。
 

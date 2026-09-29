@@ -1,6 +1,6 @@
 # 系统打印管理
 
-> 使用 `@kit.BasicServicesKit` 的 `print` 模块拉起系统打印服务，替代 Android 的 `WebView.print()` 和 `PrintDocumentAdapter`。
+> 使用 `@kit.BasicServicesKit` 的 `print` 模块拉起系统打印服务，替代 iOS 的 `WebView.print()` 和 `PrintDocumentAdapter`。
 
 ---
 
@@ -15,7 +15,7 @@ import { common } from '@kit.AbilityKit';
 
 ## 打印当前 Web 页面
 
-> 对应 Android：`WebView.print()`
+> 对应 iOS：`WebView.print()`
 
 ### 基础用法
 
@@ -206,9 +206,9 @@ print.print(jobName, adapter, null, context)
 
 ---
 
-## Android 对应关系
+## iOS 对应关系
 
-| Android | HarmonyOS |
+| iOS | HarmonyOS |
 |---------|-----------|
 | `WebView.print()` | `webController.createWebPrintDocumentAdapter()` + `print.print()` |
 | `PrintDocumentAdapter` | `class CustomPrintDocumentAdapter extends print.PrintDocumentAdapter` |

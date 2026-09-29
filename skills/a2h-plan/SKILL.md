@@ -1,6 +1,6 @@
 ---
 name: a2h-plan
-description: Android→ArkTS 迁移的执行计划生成（Pipeline 第二步）：读已审批的 spec/baseline/，产出 UI 转换计划 ui-plan.md 和功能执行计划 feature-plan.md。当用户说"生成计划""怎么做这个迁移""下一步怎么做"时触发。不要用于：生成 Spec（用 a2h-spec）或执行代码（用 a2h-execute）；spec/baseline/ 未就绪时提示先跑 a2h-spec。
+description: "iOS→ArkTS 迁移的执行计划生成（Pipeline 第二步）：读已审批的 spec/baseline/，产出 UI 转换计划 ui-plan.md 和功能执行计划 feature-plan.md。当用户说\"生成计划\"\"怎么做这个迁移\"\"下一步怎么做\"时触发。不要用于：生成 Spec（用 a2h-spec）或执行代码（用 a2h-execute）；spec/baseline/ 未就绪时提示先跑 a2h-spec。"
 metadata:
   type: pipeline
   domain: migration
@@ -9,15 +9,13 @@ metadata:
   - migration
 ---
 
-> **Codex subagent dispatch convention.** This skill dispatches subagents. In Codex, spawn them with the `spawn_agent` tool and pass `agent_type` = the role name **exactly as written in this skill** — the roles registered under `.codex/agents/*.toml` use the same hyphenated names, so no translation step is involved: `a2h-activity-converter`, `a2h-android-analyzer`, `a2h-closer`, `a2h-fixer`, `a2h-migration-worker`, `ad-profile-builder`, `compose-fact-analyzer`, `hmos-builder`, `scenario-builder`, `visual-fixer`, `visual-fixer-reviewer`. The built-in `general-purpose` agent_type is unchanged. (Claude's `subagent_type` field is written `agent_type` for Codex; `Agent(...)` dispatch calls are `spawn_agent(...)`; there is no `Task` tool in Codex.)
->
-> **Join 协议（收口五条款）。** Codex 子代理完成后**不会**唤醒主会话——结果必须由派发方主动收口，违者=静默卡死（实测事故）。
-> ① **循环 wait**：每个 `spawn_agent` 句柄用循环调用 `wait_agent` 收口；单次超时只代表"还在跑"，继续再调；**禁止以"等待子代理"为由结束回合**。醒后必调 `list_agents` 确认是谁完成——**完成的唯一合法信号 = `agent_status` 为 `{"completed": …}`，绝不是产物文件的存在/条数**（文件会中途落盘，读半截=实测事故）；completed 态会在数轮后从 list 中消失，所以每次醒来都要及时查。正文所有"等待完成 / join / 到点即收"表述一律指此循环。
-> ② **死句柄与验收**：连续 3 次超时后调 `list_agents` 核对，可配 `wait_for_artifact.py` 探产物活性；已 completed 且 summary 可读 → 直接消费；句柄消失且从未观测到 completed → 按断点重派（带原 prompt + 已落盘产物，上限 2 次），禁止继续等待。**completed ≠ 验收通过**：join 点跑 `python3 .agents/skills/a2h-join/scripts/join_gate.py --project .` 验产物完整性，FAIL 视同未取回、按本条重派。
-> ③ **收口锚点**：本 skill 最终完成报告前必须收口全部句柄（join_gate exit 0）；正文写明的显式 join 点优先按正文执行。发用户门（Gate）时允许句柄跨 Gate 存活，但 Gate 摘要必须列明未收口句柄清单 + 各自的指定 join 点。
-> ④ **放行 ≠ 遗弃**：正文"非阻塞放行/到点即收/降级继续"只推迟收口时机，不豁免收口义务。
-> ⑤ **fire-and-forget**：仅正文显式声明"结果丢弃/不 gate"的派发（如 a2h-execute 的 env-prewarm）免收口；审计只认 join_gate 内静态 allowlist，正文声明只是文档层。
-> **派发纪律**：`task_name` 必须唯一（带 page-id/slice-id/round-N 后缀）；并行派发前把预期产物清单写 `spec/a2h/_work/expected_<join点>.json`（join_gate 对账用，契约只认派发方、不认子代理自报）；**谁派谁收**——sub-agent 内部需要"等齐 N 片再合并"时禁止嵌套外派后自行退出，要么同步自做、要么把分片清单回报主会话代派（sub-agent 一停止，收口能力即丢）。**契约产物必须出自承担任务的子代理**：重派上限后仍产不出 → 如实报缺并停在未完成态；禁止派发方代写占位产物让 gate 转绿（声明过也不行——绿账必须对应真产物）。
+
+## 宿主执行与收口
+
+按本轮授权读取随包角色规程，使用宿主实际支持的派发/等待接口；不要照抄不存在的 agent_type 参数。
+具名角色不可用时按同样文件所有权顺序执行。共享账本只有一个 closer，完成后回读真实产物。
+阶段门沿用已有授权；新产品决策才询问。不能把文件存在或一次超时当作代理完成。
+最终报告前收口全部任务，未完成项保持原状态并继续可执行工作。
 
 # a2h-plan
 
@@ -95,7 +93,6 @@ a2h-plan（读 Spec → 生成双计划，indexed 布局）
 | `spec/baseline/ui-manifest.md` | UI 页面清单、优先级、confidence、共享组件、转换批次 |
 | `spec/baseline/feature-index.md` | 功能总索引、依赖图、优先级、V1/V2 分配 |
 | `spec/baseline/feature-base.md` | Base 层公共能力定义（Models, DB, Network, Events 等） |
-| `spec/baseline/features/F-xxx.md` | 各功能的详细 Spec（每个功能一个文件，顶部含 `complexity`/`tier`/`depth`，complex 的 AC 带二型锚点追踪：`源→标` parity / `决→标` 平台差异——`决:` 锚 AC 无 Kotlin 源侧，其覆盖归属 = `标` 侧实现由某 slice 认领；HARD-DIV 行的替代实现照常入切片排期） |
 | `spec/baseline/ui/page_NNNN.md` | 各页面的详细 UI Spec（每个页面一个文件） |
 | `spec/baseline/source-coverage-report.md` | 源码侧功能覆盖审计（a2h-spec C4.6b 产出，ownership + skip-list）；排期时作「已认领能力」参照 |
 | `spec/baseline/module-dep-graph.json` | 多子仓项目专有：子仓 DAG + seam 签名，用于排子仓级拓扑序 |
@@ -149,7 +146,7 @@ UI 计划负责调度所有页面的 UI 转换工作，按优先级和 confidenc
 **Step 1: 读取页面清单**
 
 从 `spec/baseline/ui-manifest.md` 的页面清单表格中提取：
-- 每个页面的 Android 源、ArkTS 目标文件、优先级（P0/P1/P2）、confidence（high/medium/low）、当前状态
+- 每个页面的 iOS 源、ArkTS 目标文件、优先级（P0/P1/P2）、confidence（high/medium/low）、当前状态
 
 **Step 2: 按优先级和 confidence 分批**
 
@@ -214,10 +211,10 @@ Slice N: [功能名]
 | complexity | Slice 流程 | Step 3b prompt 形态 | 校验 |
 |-----------|-----------|---------------------|------|
 | `simple` | 现有 4 步流程 | 仅第三段（ViewModel 实现） | — |
-| `complex` | 现有 4 步流程 | **三段式**（源码理解 + 差异清单 + ViewModel 实现，见 a2h-execute §5c） | **必须含 ≥ 1 个 `android_source_anchors`**，否则 plan 输出 FAIL |
+| `complex` | 现有 4 步流程 | **三段式**（源码理解 + 差异清单 + ViewModel 实现，见 a2h-execute §5c） | **必须含 ≥ 1 个 `source_anchors`**，否则 plan 输出 FAIL |
 | 未标 | 按白名单关键词自动推断（同 a2h-spec Step C4-pre 规则） | — | 推断为 `complex` 时同上校验 |
 
-`complexity=complex` 的 Slice，slice 文件写 `android_source_anchors_ref: {count: N, source: <feature spec 路径>}` 结构化残端——**不复制 anchors 列表**（权威在 spec 顶部，worker 按 grep-first 纪律定点消费）。`simple` 时可省略。
+`complexity=complex` 的 Slice，slice 文件写 `source_anchors_ref: {count: N, source: <feature spec 路径>}` 结构化残端——**不复制 anchors 列表**（权威在 spec 顶部，worker 按 grep-first 纪律定点消费）。`simple` 时可省略。
 
 **Step 4.0b: tier / depth 调度分档**
 
@@ -295,7 +292,7 @@ chain-auth 是**横切**链路的逐层装配契约（L0–L7），owner 分散�
 
 **顺序依据**：最末 group 的 closer 已编译过，结构兜底前再编译是冗余；而 FV-1 的 fix-forward / repair worker / icon-sizing 自愈**会改码**——终编译必须放在其后才兜得住可构建性。FV-2 的编译修复仅限编译级小改，**不回跑 FV-1**（避免 ping-pong）。
 
-**FV-1 的固定文案**（模板 [feature-plan-template.md](./templates/feature-plan-template.md) `## Final Verification` 段已展开）：调用 `arkts-structural-closure` skill 的 pipeline 模式入口（`scripts/run_loop.sh --mode pipeline`），Loop 内自动跑 audit_skeletons --scope=all + 跨 Slice orphan + 沉浸式四件套；5 类 verdict 处置见该 skill 的 SKILL.md §3.3（执行前 MUST 加载）。
+**FV-1 的固定文案**（模板 [feature-plan-template.md](./templates/feature-plan-template.md) `## Final Verification` 段已展开）：调用 `arkts-structural-closure` skill 的 pipeline 模式入口（`scripts/structural_loop.py iterate --mode pipeline`），Loop 内自动跑 audit_skeletons --scope=all + 跨 Slice orphan + 沉浸式四件套；5 类 verdict 处置见该 skill 的 SKILL.md §3.3（执行前 MUST 加载）。
 
 > **为何强制 FV-1**：a2h-execute §6 Final Structural Closure 是 Stage 3 解耦的整工程兜底（非 per-Slice），靠 Slice brief 难以追踪。在 plan 阶段把它声明为显式 blocking task，强制 a2h-execute 跑完（完成性凭据 = §6 落 loops JSON + fv brief，plan 零回填），避免遗漏。
 
@@ -311,7 +308,7 @@ chain-auth 是**横切**链路的逐层装配契约（L0–L7），owner 分散�
 
 | Step | suggested_skills |
 |------|-----------------|
-| Step 3a: UI 补充 | `a2h-activity-converter` |
+| Step 3a: UI 补充 | `a2h-ios-converter` |
 | Step 3b: ViewModel + 状态管理 | `arkts-state-manager` |
 | Step 3c: 数据层接入 | `arkts-data-layer` |
 | Step 3d/3e: 页面接线 + 切片级验证 | `arkts-state-manager` + `hmos-fix-build-errors`（closer 内编译）+ `arkts-structural-closure`（group 模式，含 size-1 组）|
@@ -334,7 +331,7 @@ Core：Batch 无页数上限（批次仅由优先级切分，页面依赖不参�
 
 ### 5b. 功能执行计划格式（L1 索引 + L2 slice 文件）
 
-**MUST 加载**两个模板：[templates/feature-plan-template.md](./templates/feature-plan-template.md)（L1 索引 + base-plan.md：Context 含 `plan_format: indexed-v1` / Base 层 stub（Base-0..7 正文写 `plans/base-plan.md`，只读无 checkbox/evidence）/ slice 头部按 parallel_group `## Group N` 分节、每组末尾 `> group-closer @ GN` 插入行、每 slice 头部含 `detail:` 指针 / FV / Summary，"必填规则"段不得删减）+ [templates/slice-plan-template.md](./templates/slice-plan-template.md)（L2 slice 文件：三铁律 / `android_source_anchors_ref` / 结构化接线账本 `integration_points`·`wires`·`modifies_files`·`cross_slice_edits`（含两条降噪规则），"字段规则"段不得删减）。
+**MUST 加载**两个模板：[templates/feature-plan-template.md](./templates/feature-plan-template.md)（L1 索引 + base-plan.md：Context 含 `plan_format: indexed-v1` / Base 层 stub（Base-0..7 正文写 `plans/base-plan.md`，只读无 checkbox/evidence）/ slice 头部按 parallel_group `## Group N` 分节、每组末尾 `> group-closer @ GN` 插入行、每 slice 头部含 `detail:` 指针 / FV / Summary，"必填规则"段不得删减）+ [templates/slice-plan-template.md](./templates/slice-plan-template.md)（L2 slice 文件：三铁律 / `source_anchors_ref` / 结构化接线账本 `integration_points`·`wires`·`modifies_files`·`cross_slice_edits`（含两条降噪规则），"字段规则"段不得删减）。
 
 索引**不含**：依赖 ASCII 树、步骤契约文本、账本内容、状态列。slice 文件由 Step 4.0–4.3 生成账本；4 步任务行只写差异化 scope + input 指针（验收契约权威在 a2h-execute §5b–5e，plan 零复述）。
 
@@ -377,8 +374,8 @@ Plan 生成完毕后，必须执行覆盖率校验，确保所有 V1 功能都�
    - `trigger_condition` 是否命中 [templates/placeholder-registry-template.md](./templates/placeholder-registry-template.md) 中的白名单格式（含第 6 类 `Slice {N} Step {3c|3d}`），且不含黑名单关键词
    - `kind` 必须是 `thirdparty-sdk` 或 `forward-ref`；`kind=forward-ref` 必须含 `resolve_by`
 7. **Complex Slice anchor 校验（直接读 feature spec）**：对全部 `complexity: complex` 的 feature：
-   - spec 顶部必须含 `android_source_anchors` 段且非空；slice 文件的 `android_source_anchors_ref.count` 与之一致
-   - 每条 anchor 的 `path` 在 `$ANDROID_SRC` 下必须实际存在（逐路径 `test -f`）
+   - spec 顶部必须含 `source_anchors` 段且非空；slice 文件的 `source_anchors_ref.count` 与之一致
+   - 每条 anchor 的 `path` 在 `$SOURCE_ROOT` 下必须实际存在（逐路径 `test -f`）
    - role 必须是 a2h-spec Step C4-pre 第 2 项定义的 9 类之一（presenter/viewmodel · service/repository · controller · manager · interceptor · base_class · util · data_model · partial_class）
 8. **跨切片接线归属检测**：交叉读全部 feature spec「## 对接点」段，产出全局 `(文件, handler, slot?) → owning_slice` 接线归属映射（slot 仅撞键时填，缺省退化二元键），写入 coverage-matrix `Wiring Ownership Map` 段、供 converter 算 `resolve_by`：
    - 非首切片 handler 必须在其 owning Slice 生成显式 `cross_slice_edits:` 条目 `{file, handler, slot?, resolve_by}`；**slot 填充类例外**——归属由 `wires` embed 条（含 resolve_by）体现，不入 cross_slice_edits（禁双登）
@@ -423,7 +420,7 @@ registry 由 Step 4.1 在 plan 生成过程中**直接写入**（`spec/` 根目�
 
 ## 7.2 grill #2 — 技术侧决策清零（HARD-GATE）
 
-> checklist：`../a2h-spec/references/migration-decision-categories.md` C0–C17。前置：a2h-spec grill #1 已完成，`spec/decision-ledger.md` 含 D0 产出定位且状态 `approved`。
+> checklist：`../a2h-spec/references/migration-decision-categories.md` C0–C17。前置：a2h-spec Phase C 的范围与差异决策已核验，`spec/decision-ledger.md` 含 D0 产出定位且状态 `approved`。
 
 §7 覆盖率校验通过后、§8 门控之前，**立即调用 `grill-with-docs`** Skill（传技术侧类目 C6–C11/C13–C14/C17）。**HARD-GATE**：每个 `thirdparty-sdk` placeholder 必有 C8 决策、每个 complex Slice 必有 C7 决策、`api-inventory.json` 的 `uncertainties[]` 无 `open` 遗留（C17，v1.3），否则阻断。
 
@@ -488,12 +485,6 @@ python3 scripts/lint_plan_coverage.py --project-root $PROJECT_ROOT
 
 ---
 
-## 收尾：上报本阶段用量
+## 阶段证据
 
-本 skill 的最后一步（无论经 `$a2h-run` 还是单独触发都要做）：
-
-```bash
-.migbot/bin/a2h mark-stage a2h-plan
-```
-
-标记 `a2h-plan` 阶段水位（写 stage-marks fact + sentinel，受授权门控、尽力而为）。token 用量由生命周期 hook 上传的会话记录在服务端解析得出，本步不采集。**忽略退出码，绝不阻断。**
+将真实产物、源/目标版本、校验命令与结果写本阶段报告；状态以证据为准。无需遥测上传。

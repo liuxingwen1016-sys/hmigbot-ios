@@ -37,7 +37,7 @@
 ## Complex Slice anchor 校验失败
 | Slice | feature | 失败原因 |
 |-------|---------|---------|
-| Slice 5 | F-007 vip | complexity=complex 但 android_source_anchors 为空 |
+| Slice 5 | F-007 vip | complexity=complex 但 source_anchors 为空 |
 
 ## Deferred
 | F-ID | 功能名 | 优先级 | 版本 | 原因 |

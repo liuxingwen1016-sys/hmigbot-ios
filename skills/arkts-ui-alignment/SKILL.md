@@ -1,16 +1,16 @@
 ---
 name: arkts-ui-alignment
-description: 将 Android UI 设计迁移到 ArkTS/HarmonyOS 的等价实现。当用户需要匹配 Android Material Design 视觉效果、把 Android 布局/控件映射到 ArkTS 等价物（含 SymbolGlyph 图标体系、颜色/间距/字号对齐）时触发。即使只说"还原这个安卓界面""图标怎么对应"也应触发。不适用于 ArkTS 原创组件设计（用 arkts-component-builder）。
+description: "将 iOS UI 设计迁移到 ArkTS/HarmonyOS 的等价实现。当用户需要匹配 iOS 原生界面 视觉效果、把 iOS 布局/控件映射到 ArkTS 等价物（含 SymbolGlyph 图标体系、颜色/间距/字号对齐）时触发。即使只说\"还原这个iOS界面\"\"图标怎么对应\"也应触发。不适用于 ArkTS 原创组件设计（用 arkts-component-builder）。"
 metadata:
   type: domain
   domain: ui
   tags:
   - ui
-  - android-migration
+  - iOS-migration
   - symbolglyph
   - material-design
 ---
-# ArkTS UI Alignment — Android UI 迁移对齐
+# ArkTS UI Alignment — iOS UI 迁移对齐
 
 ## API 版本
 
@@ -42,15 +42,14 @@ struct Index {
 
 ---
 
-## Android → ArkTS 组件映射表
+## iOS → ArkTS 组件映射表
 
-| Android 元素 | ArkTS 组件 | 备注 |
+| iOS 元素 | ArkTS 组件 | 备注 |
 |-------------|-----------|------|
 | `BottomNavigationView` | 自定义 `Row` + `@Builder tabBarItem` | 不用 `Tabs` 在 Navigation 内部 |
-| `BottomSheetDialogFragment` | `NavDestination` (全屏) 或 `Sheet` | 视需求选择 |
+| `BottomSheetDialogScreen` | `NavDestination` (全屏) 或 `Sheet` | 视需求选择 |
 | `DrawerLayout` | `SideBarContainer` | 侧边栏 |
-| `RecyclerView` | `List` + `LazyForEach` | 虚拟列表 |
-| `ViewPager2` | `Swiper` | 翻页 |
+| SwiftUI 分页 TabView / UIKit 分页容器 | `Swiper` 等目标容器 | 核对手势、选择和生命周期 |
 | `CoordinatorLayout` | `Stack` + 自定义手势 | 需手动实现 |
 | `CardView` | `Column` + `borderRadius` + `shadow` | 卡片 |
 | `FloatingActionButton` | `Button` + 绝对定位 | FAB |
@@ -60,7 +59,6 @@ struct Index {
 | `AlertDialog` | `getUIContext().getPromptAction().showDialog()` 或 CustomDialog | 弹窗（全局 `AlertDialog.show` 已废弃） |
 | `PopupMenu` | `Menu` + `MenuItem` | 菜单 |
 | `Snackbar` | `getUIContext().getPromptAction().showToast()` | 轻提示（全局 `promptAction.*` 已废弃） |
-| `ImageView` + Glide | `Image(url)` 或 `@ohos/imageknife` | 图片加载 |
 | `EditText` | `TextInput` / `TextArea`(多行) | 输入框 |
 | `CheckBox` | `Checkbox` | 多选 |
 | `RadioButton` + `RadioGroup` | `Radio`(同 group) | 单选 |
@@ -180,7 +178,7 @@ Row() { ... }
 
 ## Tab 栏方案
 
-> **先分清两种 Tab，别一刀切**：下面"别把 `Tabs` 放进 `Navigation`"的告诫**只针对底部主导航 + Navigation 路由**这一种场景。**顶部分段切换（Android `TabLayout` + `ViewPager2`，不在 Navigation 内）应直接用原生 `Tabs`**，不要手搓 `Row` 页签 + `Swiper` 同步（那是回避、还原度差）：
+> **先分清两种 Tab，别一刀切**：下面"别把 `Tabs` 放进 `Navigation`"的告诫**只针对底部主导航 + Navigation 路由**这一种场景。**顶部分段切换（源页面的分段选择与分页容器，不在 Navigation 内）应直接用原生 `Tabs`**，不要手搓 `Row` 页签 + `Swiper` 同步（那是回避、还原度差）：
 >
 > ```typescript
 > Tabs({ barPosition: BarPosition.Start, index: this.idx }) {
@@ -331,7 +329,7 @@ Column() {
 
 ## 生成检查清单
 
-- [ ] Android 组件已查对照表找到 ArkTS 等价物
+- [ ] iOS 组件已查对照表找到 ArkTS 等价物
 - [ ] 图标统一使用 SymbolGlyph（不使用 emoji）
 - [ ] Symbol 名称来自已验证清单
 - [ ] 颜色使用 HarmonyOS 色值映射
@@ -360,6 +358,6 @@ Column() {
 
 ## References
 
-- `references/layout-mapping.md` — Android→ArkTS 组件映射详细版 + 代码示例 + 单位转换
+- `references/layout-mapping.md` — iOS→ArkTS 组件映射详细版 + 代码示例 + 单位转换
 - `references/visual-patterns.md` — 药丸 Tab 栏 + 封面 fallback + MiniPlayer + SymbolGlyph + 阴影卡片
 - 遇到版本兼容性或其他不确定的 ArkTS 知识点，参阅 **arkts-knowledge-verifier** skill

@@ -8,7 +8,7 @@
 
 | 产物 | 唯一路径 | 写入者 |
 |---|---|---|
-| 当前页面/Android 映射 | `plan/page-source-map.json` | 主线程合并各角色建议 |
+| 当前页面/iOS 映射 | `plan/page-source-map.json` | 主线程合并各角色建议 |
 | 当前导航设计 | `plan/navigation/P{NNNN}_{PageName}.md` | NAVIGATION designer，PAGE_SCOPE 互斥 |
 | 当前页面功能设计（含 Dialog/journey 定义） | `plan/pages/P{NNNN}_{PageName}.md` | FUNCTION designer，PAGE_SCOPE 互斥 |
 | 当前用户报告 | `ui-report.md` | execute/reconcile，正文反映当前状态 |
@@ -20,7 +20,7 @@
 
 每轮冻结输入时，将该轮实际使用的 `plan/page-source-map.json`、导航/功能设计复制至 `round-N/evidence/plan-snapshot/`，保留 plan 内相对层级，并在其中的 `snapshot.json` 记录文件列表、原始规范路径、快照相对路径、内容 sha256、mapping_revision、phase。该快照之后只读；NAVIGATION 只冻结映射和导航设计，不等待尚在编写的功能设计。当前计划可以迭代，但不能改写已封存轮次的证据。
 
-生成 agent 读取当前 plan；execute/reconcile 的本轮结论及 fixer 的失败依据读取对应 round 快照。inventory 的 `design_source` 保留当前规范路径用于按稳定 ID 追溯，并由该轮快照提供当时内容；结果的 evidence 引用本轮归档路径。重测必须按当前计划和映射复核，不能用旧快照代替最新输入。源码原件仍在 Android/鸿蒙项目中，快照仅保存计划及其源码引用/哈希，不复制整个项目。
+生成 agent 读取当前 plan；execute/reconcile 的本轮结论及 fixer 的失败依据读取对应 round 快照。inventory 的 `design_source` 保留当前规范路径用于按稳定 ID 追溯，并由该轮快照提供当时内容；结果的 evidence 引用本轮归档路径。重测必须按当前计划和映射复核，不能用旧快照代替最新输入。源码原件仍在 iOS/鸿蒙项目中，快照仅保存计划及其源码引用/哈希，不复制整个项目。
 
 ## 1. 模式与授权
 
@@ -35,9 +35,9 @@
 ## 2. 前期并行、最终包与逐页准入
 
 ```text
-页面/Android 源码映射 → 导航设计与最小导航测试包
+页面/iOS 源码映射 → 导航设计与最小导航测试包
                          ├─ 全量导航执行 → 到页问题分诊/修复/回归
-                         └─ 按页读取映射和 Android 源码 → 功能设计与测试编写
+                         └─ 按页读取映射和 iOS 源码 → 功能设计与测试编写
                          ↓ 两分支均完成，映射与草稿复核，冻结输入
                     构建安装最终测试包
                          ↓

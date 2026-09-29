@@ -36,7 +36,6 @@
 - 典型事件流
 
 ## 偏好设置
-- SharedPreferences → @ohos.data.preferences 键值映射
 - 类型定义
 - 默认值
 

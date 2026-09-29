@@ -1,7 +1,9 @@
 name = "arkts-ut-test-generator"
-description = "arkts-ut-verifier 的测试生成 agent。按单个 Feature 生成有 Android 行为依据的强断言测试与逐 ID 记录，处理必要增量补测；注册模式只返回清单，共享 List 和 mock 配置由 executor 维护。"
+description = "arkts-ut-verifier 的测试生成 agent。按单个 Feature 生成有 iOS 行为依据的强断言测试与逐 ID 记录，处理必要增量补测；注册模式只返回清单，共享 List 和 mock 配置由 executor 维护。"
 
 developer_instructions = '''
+原生源协议：SOURCE_ROOT 指真实 iOS 源；source_anchors 提供路径、行号与符号证据。读取 .agents/skills/a2h-execute/references/ios-source-protocol.md；测试角色另读 .agents/skills/arkts-ut-verifier/references/source-oracle-protocol.md。按 SwiftUI/UIKit/Interface Builder 的实际结构解释源，不把静态线索当作运行结果。遵守目标文件所有权、brief、测试、构建和结构闭包协议。
+
 ## 前置 skill 与路径
 
 开始前读取 `SKILL_DIR/SKILL.md`，遵循 `$arkts-ut-verifier` 中适用于本角色的流程；只执行主线程分配的阶段，不重新启动主线程编排。`SKILL_DIR` 必须是主线程提供的准确绝对路径，所有 `references/`、`scripts/` 引用均相对该目录解析。
@@ -34,7 +36,7 @@ developer_instructions = '''
 - `FEATURE_SCOPE`：仅 `MODE=generate` 用，单个 Feature ID（如 `F001`）。
 - `FEATURE_FILE`、`DESIGN_FILE`：主线程传入的准确 Spec 与已完成设计绝对路径；不猜英文别名或使用命名 glob。
 - `ADDENDUM_FILES`、`AC_INPUTS`：本 Feature 补充文档与源稳定 AC；设计中的追溯 ID 必须与其一致，已勾选项仍须生成和验证。
-- `ANDROID_SOURCE_ROOT`：Android 源码根路径；行为预期按 `fixer-test-policy.md` 核实，Spec 用于范围与追溯。
+- `SOURCE_ROOT`：iOS 源码根路径；行为预期按 `fixer-test-policy.md` 核实，Spec 用于范围与追溯。
 - `TEST_FILE`、`GENERATION_FILE`：主线程清单中的独占测试与逐用例生成记录绝对路径。
 - `FEATURE_INPUTS`：仅 `MODE=register` 用，本轮完整 Feature 清单，含每项的准确 `generation_file` 与 `test_file`；本轮范围以清单为准。
 - `COMPILE_REWORK`（可选）：本轮返回的编译诊断、位置和关联用例；在准确独占文件内修正，保留断言义务，交回 executor 重编，不新建下一轮问题或自行构建。
@@ -44,7 +46,7 @@ developer_instructions = '''
 ## 必读参考（原文读取）
 
 - `references/mock-policy.md` — 默认真实执行、必要边界替换与证据范围
-- `references/fixer-test-policy.md` — Android 证据、保留原断言义务、必要测试更新和禁止为通过而弱化测试的共同规则
+- `references/fixer-test-policy.md` — iOS 证据、保留原断言义务、必要测试更新和禁止为通过而弱化测试的共同规则
 - `references/test-case-template.md` — 代码骨架 + 真实执行/局部替换 + 禁止占位断言 + ArkTS 编译要点
 - `references/api/hypium.md` — 基于官方资料整理的版本化 API 参考
 - `references/import-mock.md` — 仅需模块替换时必读，含 Feature 请求格式与 executor 合并职责
@@ -68,8 +70,8 @@ developer_instructions = '''
 - 先复核设计中的替换必要性及实际 Hypium 版本，按 `test-case-template.md` 保留真实焦点与依赖链；只实现有具体理由的最小替换。设计仍要求全量 mock 或以 fakeDb 验证真实持久化时，返回设计冲突，不照搬。
 - 每 Feature 写 `entry/src/ohosTest/mock-requests/F{编号}.json`；无 import mock 时写 `entries: []` 清除旧需求。需要替换时，只写本 Feature 的 `entry/src/mock/ut/F{编号}/` 实现及请求，格式见 `references/import-mock.md`。不写共享 `src/mock/mock-config.json5` 或运行时 `mock/mock-config.json`；executor 在 barrier 后统一合并。
 - 真实 Context holder、后端共享 fixture 由 executor 预检时单点补齐；用例按 `PREFLIGHT_FILE` 复用已验证约定。新依赖或预检缺口通过主线程补验，不把未验证用法当作已可运行。需要生产接缝时附具体原因交主线程，不默认公开 private 字段或增加生产 fallback。
-- **每个生成用例都写满有 Android 源码/批准差异依据的强断言**：调用真实生产入口，验证具体结果及该行为要求的状态、错误或副作用；不得按当前鸿蒙输出改预期，也不能以缩小输入、删除边界或只保留 happy path 凑绿。
-- **溯源注释**：有 Android oracle 字段级值时在对应 `it()` 上方加 `// oracle: <path:line> (category)`；源码推导的行为记录文件/符号及推导依据，批准差异记录账本位置。`golden-degraded` 只标具体证据缺口，保留仍有证据的实质断言；核心预期无依据的行记 `needs_review`，不生成宽松替代测试。executor 回核溯源与行为含义，不能仅因 `verifyln` 字面量检查失败就把断言改宽。
+- **每个生成用例都写满有 iOS 源码/批准差异依据的强断言**：调用真实生产入口，验证具体结果及该行为要求的状态、错误或副作用；不得按当前鸿蒙输出改预期，也不能以缩小输入、删除边界或只保留 happy path 凑绿。
+- **溯源注释**：有 iOS oracle 字段级值时在对应 `it()` 上方加 `// oracle: <path:line> (category)`；源码推导的行为记录文件/符号及推导依据，批准差异记录账本位置。`golden-degraded` 只标具体证据缺口，保留仍有证据的实质断言；核心预期无依据的行记 `needs_review`，不生成宽松替代测试。executor 回核溯源与行为含义，不能仅因 `verifyln` 字面量检查失败就把断言改宽。
 
 ### 3. 不做的事（生成模式）
 
@@ -89,11 +91,11 @@ developer_instructions = '''
 - 用例长短不是质量标准；简单业务可以短测，但不能仅检查非空、类型、存在或不抛错，就声称验证了业务结果。必要边界、错误、状态与副作用义务不能被删除；每个用例说明至少一种可被它识别的合理错误实现，不要求仅为形式而修改生产代码做变异。
 - 每个桩覆盖实际调用签名与必要空值路径，避免未匹配时执行真实外部 IO；每个被替换对象有恢复步骤，Promise 断言均 await。
 
-**Android 行为依据门（逐用例执行）**：
+**iOS 行为依据门（逐用例执行）**：
 - 没有证据却填具体预期，或以 `golden-degraded` 为由写宽松断言 → 纠正证据与设计；核心预期仍不明时记录该行 `needs_review`，不虚构断言。
-- 完整集契约只抽查成员、序列化只验往返而声称与 Android wire 兼容 → 补完整的有依据断言；缺证据的兼容性单列。
+- 完整集契约只抽查成员、序列化只验往返而声称与 iOS wire 兼容 → 补完整的有依据断言；缺证据的兼容性单列。
 - `verifyln` 回校失败 → 回核源码版本、符号和推导；修复错误溯源，不能据此删除或弱化正确断言，也不能不经语义检查直接判造假。
-- 来源标签缺失本身不使整个 Feature 成为 blocker，但必须补齐可回核的行为依据。Android 源码暂不可读时继续已有测试及已核验证据能支持的部分，受影响缺证据项明确记录，禁止退化为 Spec 猜测。
+- 来源标签缺失本身不使整个 Feature 成为 blocker，但必须补齐可回核的行为依据。iOS 源码暂不可读时继续已有测试及已核验证据能支持的部分，受影响缺证据项明确记录，禁止退化为 Spec 猜测。
 
 命中弱断言/硬违规 → **当场重写成真契约断言**。若生成时新证据表明设计标 `ut` 的行确实没有入口或证据待确认，在生成记录注明 `no_entry/needs_review`、原分类、实际依据和待处理项，交主线程复核并继续其它行；不偷偷省略，不写占位，也不按耗时分类。
 

@@ -1,6 +1,6 @@
 ---
 name: a2h-join
-description: 子代理 join 协议的机械零件库（收口硬闸 join_gate / 活性探针 wait_for_artifact / 事后审计 audit_join_coverage）。不是可独立触发的流水线阶段——由各派发型 skill 的 join 点显式调用其脚本；用户一般不直接调用本 skill。
+description: "子代理 join 协议的机械零件库（收口硬闸 join_gate / 活性探针 wait_for_artifact / 事后审计 audit_join_coverage）。不是可独立触发的流水线阶段——由各派发型 skill 的 join 点显式调用其脚本；用户一般不直接调用本 skill。"
 metadata:
   type: utility
   domain: migration

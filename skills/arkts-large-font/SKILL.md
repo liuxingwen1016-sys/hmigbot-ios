@@ -1,6 +1,6 @@
 ---
 name: arkts-large-font
-description: ArkTS 大字体场景下的根因定位与修复（V2 优先，兼容 V1）：系统字体缩放（fontSizeScale 1.15 / 1.45 / 1.75 / 2.0 / 3.2x）下文本/布局/图标出现截断、溢出、重叠、位置错乱、SymbolGlyph 异常放大、浮层/菜单变小或越界、切换档位后不刷新等。若文本被 Ellipsis 截断但与字体档位无关，改用 arkts-text-truncation；若主要是读屏/焦点/热区等无障碍功能，改用 arkts-accessibility。
+description: "ArkTS 大字体场景下的根因定位与修复（V2 优先，兼容 V1）：系统字体缩放（fontSizeScale 1.15 / 1.45 / 1.75 / 2.0 / 3.2x）下文本/布局/图标出现截断、溢出、重叠、位置错乱、SymbolGlyph 异常放大、浮层/菜单变小或越界、切换档位后不刷新等。若文本被 Ellipsis 截断但与字体档位无关，改用 arkts-text-truncation；若主要是读屏/焦点/热区等无障碍功能，改用 arkts-accessibility。"
 metadata:
   type: domain
   domain: ui

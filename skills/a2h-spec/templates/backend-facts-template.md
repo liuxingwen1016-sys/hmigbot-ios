@@ -1,7 +1,7 @@
 # 后端契约事实 — {项目名}
 
 > 用户预提供的后端契约参考。由 a2h-spec Step 3.0c2 在源码路径确认后收集，落到 `spec/ref/backend-facts.md`。
-> 下游消费方：`android-api-inventory` Phase 3.1b（对 `uncertainties[]` 预销账）、a2h-plan grill #2 Step 0-C17（残余项收口）、`arkts-network-troubleshoot` Phase 0.6（execute 期向后端正式索取时只补本文件缺口）。
+> 下游消费方：`ios-api-inventory` Phase 3.1b（对 `uncertainties[]` 预销账）、a2h-plan grill #2 Step 0-C17（残余项收口）、`arkts-network-troubleshoot` Phase 0.6（execute 期向后端正式索取时只补本文件缺口）。
 > **本文件可在项目全周期手工追加 / 修改**；每次 api-inventory 或 grill 跑时会重新读，无需重新生成。
 
 ---
@@ -38,7 +38,7 @@
 
 - 必填字段：__
 - 服务端 enum 约束：__（如 channel 允许取值列表）
-- DB NOT NULL：__（如 USER_INFO.ANDROID_ID）
+- DB NOT NULL：__（如 USER_INFO.iOS_ID）
 - 样例响应（可贴脱敏 JSON）：
 
 ```json

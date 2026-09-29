@@ -13,7 +13,7 @@
 
 toggleDesktopMode(): void {
   const desktopUA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36';
-  const mobileUA = 'Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 Chrome/90.0.0.0 Mobile Safari/537.36';
+  const mobileUA = 'Mozilla/5.0 (Linux; iOS 11; Pixel 5) AppleWebKit/537.36 Chrome/90.0.0.0 Mobile Safari/537.36';
   this.isDesktopMode = !this.isDesktopMode;
   this.webController.setCustomUserAgent(this.isDesktopMode ? desktopUA : mobileUA);
   this.webController.refresh();

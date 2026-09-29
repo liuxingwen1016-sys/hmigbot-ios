@@ -1,7 +1,7 @@
 # HarmonyOS 参考文档 — {项目名}
 
 > 用户预提供的 HarmonyOS 知识参考。由 a2h-spec Step 3.0c 在源码路径确认后收集，落到 `spec/ref/hmos-references.md`。
-> 后续 `android-api-inventory` 子 agent 与 a2h-plan grill #2 Step 0 共享消费此文件作为 HarmonyOS 等价物预标注 / 用户预知收集的输入源之一。
+> 后续 `ios-api-inventory` 子 agent 与 a2h-plan grill #2 Step 0 共享消费此文件作为 HarmonyOS 等价物预标注 / 用户预知收集的输入源之一。
 > **本文件可在项目全周期手工追加 / 修改**；每次 api-inventory 或 grill 跑时会重新读，无需重新生成。
 
 ---
@@ -45,5 +45,5 @@
 ## 使用约定（给下游 skill 消费方）
 
 - 本文件**完全可选**：未提供时下游降级到 `harmonyos-development` skill / `grill-with-docs` / Web 文档查询链
-- 子 agent / grill 跑时，对每个 Android API / 三方 SDK / 系统能力：**优先匹配本文件中的条目**；命中即可作为 user-provided 等价物提示
+- 子 agent / grill 跑时，对每个 iOS API / 三方 SDK / 系统能力：**优先匹配本文件中的条目**；命中即可作为 user-provided 等价物提示
 - 用户可在项目跑到一半时手工追加新发现的链接；下次 api-inventory 或 grill 跑会自动消费新内容

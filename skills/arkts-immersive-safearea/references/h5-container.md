@@ -23,7 +23,7 @@ H5 容器的状态栏让位**由 H5 自己处理**（CSS `env(safe-area-inset-to
 
 ### 2. TitleBar 通常完全移除
 
-先看 Android 同款页面 XML（如 `cs_vip_webview_activity.xml`）。如果 Android 也无原生 TitleBar、X 关闭按钮由 H5 自己渲染，那 HOS 端**也不要**加任何 native TitleBar 或浮层 X。
+先读 iOS WKWebView 容器的 controller/View、布局和导航源事实。如果 iOS 也无原生 TitleBar、X 关闭按钮由 H5 自己渲染，那 HOS 端**也不要**加任何 native TitleBar 或浮层 X。
 
 ### 3. 关闭路径有 3 条，必须语义一致
 
@@ -123,7 +123,7 @@ struct VipH5Page {
 ## 自检 Checklist
 
 - [ ] 改造前已用 ArkUI Inspector 确认实际入口 page
-- [ ] 已查 Android 同款 page XML，确认是否需要原生 TitleBar；如果不需要则**完全移除** TitleBarComponent
+- [ ] 已查 iOS 同款 page XML，确认是否需要原生 TitleBar；如果不需要则**完全移除** TitleBarComponent
 - [ ] native 端**不**给 Web 加 `padding-top: windowTopPadding`
 - [ ] Web 用 `width('100%').height('100%')`（不用 layoutWeight，因 Stack 容器无效）
 - [ ] 加载进度条用 `.position({y: windowTopPadding})` 浮层，不参与 layout 流

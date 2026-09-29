@@ -98,7 +98,7 @@ Stage 3 一律以 parallel_group 为粒度执行，`5-step3b-vm.md` / `6-step3c-
 
 作者性读取不受限（spec / anchors 源码 / 快照 / 自己要改的文件）。校验性读取一律 grep 定位 + 窗口读：
 - 查页面状态 / 复用组件：grep ui-manifest 对应行（禁整读、禁扫 components/ 目录）
-- **白名单例外（设计令牌）**：`ui-manifest.md` 的 `## 全局约定` 节**允许整节读**（`sed -n '/^## 全局约定/,/^## /p'`，通常 ≤20 行），任何产出 UI 代码的 agent（converter / Step 3a / fixer）**必须**在写样式前读取本节。理由：设计令牌（主色 / 主题 / 排版 / 图标方案）是 Android 侧样式真值的唯一落点，被 grep-first 挡在生成现场之外会导致主题色、字号、间距整体丢失，或诱发自创平行令牌体系（历史事故：DiceRoller 主题紫全丢、AIPPT 自创 `DesignTokens.ets` 架空 `float.json`）
+- **白名单例外（设计令牌）**：`ui-manifest.md` 的 `## 全局约定` 节**允许整节读**（`sed -n '/^## 全局约定/,/^## /p'`，通常 ≤20 行），任何产出 UI 代码的 agent（converter / Step 3a / fixer）**必须**在写样式前读取本节。理由：设计令牌（主色 / 主题 / 排版 / 图标方案）是 iOS 侧样式真值的唯一落点，被 grep-first 挡在生成现场之外会导致主题色、字号、间距整体丢失，或诱发自创平行令牌体系（历史事故：DiceRoller 主题紫全丢、AIPPT 自创 `DesignTokens.ets` 架空 `float.json`）
 - 查占位：按本 slice 前缀 `grep "P-S{N}-"` registry
 - 定位 marker / handler / @Builder 槽位：grep 后 Read ±30 行窗口，禁整读 .ets
 
@@ -117,7 +117,7 @@ ledger 里「显式失败 / 禁止伪成功 / fail-closed」类**错误处理策
 （失败时不许假装成功、不许静默吞错），**不得外延为架构级拒绝服务**：
 
 - **禁止**把「未配置/未 hydrate/未登录」实现成「守卫直接 throw、功能整片不可用」——
-  行为基线永远 = Android 侧可观察行为（例：Android 未登录时 token=空串**照样发请求**，
+  行为基线永远 = iOS 侧可观察行为（例：iOS 未登录时 token=空串**照样发请求**，
   由服务端返回未登录态；那 HarmonyOS 也必须如此，而不是端上先抛"未配置"）。
 - 任何 fail-closed 守卫骨架（ready 标志 + 未就绪即 throw + 装配方法）**必须在启动组装根
   真实接线**（实例化 + 调装配方法 + 接到消费方）；写完守卫不装配 = P0
@@ -140,31 +140,27 @@ ledger 里「显式失败 / 禁止伪成功 / fail-closed」类**错误处理策
 
 ## 显隐绑定铁律（「我的」页四按钮消失事故后 HARD，CC/CX 同病实录）
 
-安卓的条件显隐（`xxx.visibility = when(config.field)…` / XML `android:visibility="gone"`）
 迁移时三条硬规矩：
 
-1. **默认极性 = 安卓默认**。条件渲染开关的初始值必须照抄安卓侧默认行为
-   （XML 无 visibility 属性 = 默认可见 = 初始 true；显式 gone = 初始 false）。
+1. **默认极性 = iOS默认**。条件渲染开关的初始值必须照抄iOS侧默认行为
+   （SwiftUI 条件分支、hidden/opacity/hit testing、UIKit isHidden/alpha 与 IB 初值分别核验；隐藏、透明和移除布局不是同一种状态）。
    **禁止用 fail-closed 本能选 false**——绑定债两侧都可能欠，初始值忠实的欠了债
    用户看不出，反极性的欠一笔债就丢一块界面（showServiceCenter=false 实录）。
 2. **声明即接线**。声明了条件渲染开关（@Local/@State boolean + if 渲染），必须
    同步写赋值链（从模型/store/config 到组件）——binding_gate 的 dead-render-flag
    会把零赋值开关判 FAIL（默认 false）/ WARN（默认 true）。
-3. **逐条核销清单**。`spec/baseline/ui/visibility-bindings.json`（spec 期从安卓源
-   抽取的显隐绑定真值账）里本页的 runtime-toggle 条目必须逐条有对应实现——
-   数据驱动名零出现 = binding-dropped FAIL。确属决策批准砍掉的（如 D-010 渠道
-   unavailable），登记 P-ID 留痕，不许静默丢。
+3. **逐条核销清单**。从本页 spec 及 `ios-semantics.json` 的 state_ownership、events、
+   binding_flow（适用时）读取源初值、条件和变化路径，逐项对账目标赋值链与显示结果。
+   将对应位置与差异写入 source-understanding/brief。目标 binding_gate 只能检目标形态，
+   不能替代这项原生源核对；缺实现记 findings。经决策批准删减的能力登记 P-ID 与 D-ID。
 
 ## ArkUI 布局语义铁律（.align 误用事故后 HARD，60 处实锤）
 
-`.align()` 只对齐**组件自身内容**，**不定位 Stack 子项**——安卓 FrameLayout gravity
-直觉直接迁移是错的（实录：搜索图标叠在标题正中、「立即生成」按钮浮到卡片顶部遮内容，
-aippt_codex_v2 全 app 60 处）。FrameLayout gravity 的合法映射只有三种：
+按目标布局语义实现，避免叠层图标误居中或按钮错位：
 
 1. 全部子项同向 → `Stack({ alignContent: Alignment.X })`
 2. 逐子项异向 → `RelativeContainer` + `alignRules`
 3. 标题栏左中右 → `Row` + 两端对称占位块（保持中间真居中）
 
 `.align()` 的唯一合法场景：子项已撑满（`layoutWeight(1)` / `height('100%')`）后
-钉自身内容。转换含 FrameLayout/层叠布局的页面前 **MUST `$arkts-ui-alignment`**
-读 references/layout-mapping.md（binding_gate 的 stack-align-misuse 会机械拦截误用）。
+读 arkts-component-builder 的布局参考（binding_gate 的 stack-align-misuse 会机械拦截部分误用）。

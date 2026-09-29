@@ -1,14 +1,14 @@
 # UT 修复并发派发
 
-主线程每轮维护一个最多 8 个 `arkts-ut-fixer` 的工作池。每个实例派发已注册的具名 Codex agent `arkts-ut-fixer`（安装后的定义为 `.codex/agents/arkts-ut-fixer.toml`），传入准确 `SKILL_DIR` 及工作项输入；完整角色指令由 TOML 定义提供，各实例继承会话模型。修复器以 Android 源码行为为依据，修改分配的生产文件并按需更新、新增测试及关联设计记录；规则见 `fixer-test-policy.md`。主线程负责文件所有权与汇总，一个 executor 独立验收测试质量、单点注册和全量复测。
+主线程每轮维护一个最多 8 个 `arkts-ut-fixer` 的工作池。每个实例派发已注册的具名 Codex agent `arkts-ut-fixer`（安装后的定义为 `.codex/agents/arkts-ut-fixer.toml`），传入准确 `SKILL_DIR` 及工作项输入；完整角色指令由 TOML 定义提供，各实例继承会话模型。修复器以 iOS 源码行为为依据，修改分配的生产文件并按需更新、新增测试及关联设计记录；规则见 `fixer-test-policy.md`。主线程负责文件所有权与汇总，一个 executor 独立验收测试质量、单点注册和全量复测。
 
 ## 分配问题和文件
 
-1. 读取上一轮 `round-N/ut/` 的准确问题文件和当前源码。`kind=RED/ERROR/IMPL_MISSING` 且 `disposition=null` 的条目进入自动修复。旧 `manual_review/skipped/UNREACHABLE` 若仅因禁止改测试、fixture、旧 no_entry 或已解决的证据缺口，主线程复核当前入口与 Android 依据后清回 null、修正分类，保留准确 ID 并恢复派单；真正不可达或需裁决的条目记录排除依据。fixer 不擅自清状态。
+1. 读取上一轮 `round-N/ut/` 的准确问题文件和当前源码。`kind=RED/ERROR/IMPL_MISSING` 且 `disposition=null` 的条目进入自动修复。旧 `manual_review/skipped/UNREACHABLE` 若仅因禁止改测试、fixture、旧 no_entry 或已解决的证据缺口，主线程复核当前入口与 iOS 依据后清回 null、修正分类，保留准确 ID 并恢复派单；真正不可达或需裁决的条目记录排除依据。fixer 不擅自清状态。
 2. 结合 `suggested_files`、源码缺口与 [生产接线策略](fixer-wiring-policy.md)，按完整能力列出实现、实际调用方、结果消费及必要生命周期/声明需要写入的具体文件；页面、common、启动入口和路由声明属于必要业务接线时一并分配，不仅因目录层级另交角色。建议路径是诊断线索，不是最终所有权。确认路径位于项目内并符合 fixer 写盘范围，规范化 `..`、符号链接和文件系统大小写别名，不能让同一实际文件拥有两个写者。新增文件也列出准确路径，不授予整个目录或 glob。
 3. 以生产实现及接线文件、测试文件、独占 mock、设计/generation/诊断记录的写交集组成同一工作项，包含传递交集：A 写 X，B 写 X/Y，C 写 Y 时三项由同一 fixer 处理。可以跨 Feature 合并；不能将同一个 Feature 测试文件按用例 ID 分给两个同时写入的 fixer。只读同一文件不构成写冲突；接口/消费链依赖按前置工作项排序，必要接线仍属于功能交付范围。
 4. 没有可写路径或归属尚未确认的问题可以分配 `OWNED_FILES=[]` 的只读定位工作项，定位后通过所有权请求补齐再修改；确实无法定位则返回有证据的 BLOCKED。不能遗漏或猜一个公共目录授权。分组较大时不得为了凑足 8 路切开仍有文件交集的工作项。
-5. 给每个工作项传唯一 `WORK_ITEM_ID`、准确 `ISSUE_FILES`、`OWNED_FILES`、独占 `SUMMARY_FILE`，以及 `ANDROID_SOURCE_ROOT` 和受影响 `FEATURE_INPUTS`。后者沿用 feature_inputs.py 的 `feature_id/feature_file/oracle_file/design_file/unimplemented_file/generation_file/test_file`，按需要追加真实 `mock_request_file/mock_files`。路径清单只提供定位，写权限取 OWNED_FILES 与角色白名单交集；oracle/Spec 只读。派发前保存相关文件和暂存区状态，并说明不得覆盖其他人的改动。
+5. 给每个工作项传唯一 `WORK_ITEM_ID`、准确 `ISSUE_FILES`、`OWNED_FILES`、独占 `SUMMARY_FILE`，以及 `SOURCE_ROOT` 和受影响 `FEATURE_INPUTS`。后者沿用 feature_inputs.py 的 `feature_id/feature_file/oracle_file/design_file/unimplemented_file/generation_file/test_file`，按需要追加真实 `mock_request_file/mock_files`。路径清单只提供定位，写权限取 OWNED_FILES 与角色白名单交集；oracle/Spec 只读。派发前保存相关文件和暂存区状态，并说明不得覆盖其他人的改动。
 
 主线程保存工作项到问题 ID、源码文件、独立摘要及运行实例的映射。全部 actionable ID 必须恰好分配一次；不同工作项的写文件集合必须互斥。写冲突分组不自动代表同根因。经当前日志、调用链与前置条件核验的共同根因可记录为 `ROOT_CAUSE_GROUPS: [{cause, evidence, affected_ids}]`，同一 owner 只诊断和修改一次共享实现；每个 ID 的独立断言义务、处置和实际复测仍保留，不能由一个代表用例推定其余通过。
 
@@ -33,7 +33,7 @@
 
 1. 回读所有独立摘要，逐 ID 核对最终 `EDITED/RETEST/SKIPPED/BLOCKED` 恰好覆盖全部分配问题。RETEST 表示无需文件修改但仍需独立复测；续跑使用同一问题的最终状态，不重复计数；排除项另列。
 2. 核对本轮实际修改都由对应文件所有者完成，新增文件同样检查；保留原有用户/其它任务改动，不能把整个工作区或共享暂存区当成本轮产物。逐问题检查消费链和改动间的兼容性；发现越界或遗漏先协调修正，不直接提交。
-3. 反查 `FILES_MODIFIED` 及新增入口关联的旧 no_entry/UNREACHABLE、依赖用例和生产调用方，结合 `ANDROID_EVIDENCE/WIRING_EVIDENCE/TEST_UPDATES` 核对必要接线、补测和分类是否完整。遗漏交原 fixer 工作项，扩展问题/Feature/文件时先更新映射；失效 round 分类由主线程复核修正。源码与测试均已适用而只需复测时保留复测目标，不制造代码改动，也不把“未 Edit”当作无可处理条目。
-4. 主线程汇总摘要，executor 独立回读 Android 依据、生产调用链与测试差异，按 `fixer-test-policy.md` 和 `fixer-wiring-policy.md` 检查强断言、必要接线、原验收义务和逐 ID 对账；不合格项本轮退回所有者。测试更新完成后由 executor `MODE=register` 单点维护完整 List，执行时合并 mock 配置。未完成接线、补测、陈旧分类、弱断言退回不得通过 disposition 消除。
+3. 反查 `FILES_MODIFIED` 及新增入口关联的旧 no_entry/UNREACHABLE、依赖用例和生产调用方，结合 `SOURCE_EVIDENCE/WIRING_EVIDENCE/TEST_UPDATES` 核对必要接线、补测和分类是否完整。遗漏交原 fixer 工作项，扩展问题/Feature/文件时先更新映射；失效 round 分类由主线程复核修正。源码与测试均已适用而只需复测时保留复测目标，不制造代码改动，也不把“未 Edit”当作无可处理条目。
+4. 主线程汇总摘要，executor 独立回读 iOS 依据、生产调用链与测试差异，按 `fixer-test-policy.md` 和 `fixer-wiring-policy.md` 检查强断言、必要接线、原验收义务和逐 ID 对账；不合格项本轮退回所有者。测试更新完成后由 executor `MODE=register` 单点维护完整 List，执行时合并 mock 配置。未完成接线、补测、陈旧分类、弱断言退回不得通过 disposition 消除。
 5. executor 对最终完整集合执行 `compile_check`，消费编译/质量退回并同轮重验；完整双 HAP 通过后主线程统一暂存、提交已核对文件，避免混入已有差异，无改动不造空提交。再由唯一 executor 核验构建证据并对完整既有范围及新增测试实跑；只有独立质量检查和实际日志判定解决与回归，`EDITED` 不代表通过。提交后发生修改时按检查点策略补验收/编译/提交并重跑。
 6. reconcile 完成后再开始下一轮。不得对每个 fixer 单独提交/全量复测，也不得让两个修复轮次同时写生产或测试文件。

@@ -323,7 +323,7 @@ private handleLoginError(err: BusinessError): void {
 
 > 此节为 Fitness 项目特定语境（来自 spec/baseline/migration-decisions.md D-4），其他项目可忽略。
 
-Android 闪验 SHANYAN → HarmonyOS 替换三档：
+iOS 闪验 SHANYAN → HarmonyOS 替换三档：
 
 | 候选 | 工作量 | 体验 | 上架风险 |
 |---|---|---|---|

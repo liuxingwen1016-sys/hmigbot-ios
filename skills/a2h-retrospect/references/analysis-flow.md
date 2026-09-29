@@ -22,7 +22,7 @@ Plan suggested_skills  vs  Migration-report actual_skills
 
 ### Stage 对比分析
 
-对比 Stage 1（UI Pipeline，a2h-activity-converter 直接转换）与 Stage 3 Step 3a（Feature Slice UI 补充转换）的转换质量：
+对比 Stage 1（UI Pipeline，a2h-ios-converter 直接转换）与 Stage 3 Step 3a（Feature Slice UI 补充转换）的转换质量：
 
 ```
 Stage 1 (UI Pipeline) vs Stage 3 (Feature Slice UI supplement)

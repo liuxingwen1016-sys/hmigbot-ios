@@ -14,13 +14,12 @@ entry/src/ohosTest/ets/test/ui/pages/<page_short>/
 
 同一份页面设计也负责记录从该页发起的 journey：以“第一个业务特定动作所在页”为唯一 owner，保留在该 owner 页的 §B planned feature inventory 中，不在途经页或结果页重复登记。journey 用例 ID 仍使用 owner 页的 `P{编号}`；到达 owner 页之前的点击只算 setup/navigation，不算“第一个业务特定动作”。
 
-先读取 page-source-map.md 与项目 page-source-map.json，按当前 revision 直接读取 Android 源文件/符号及必要调用链；Android 行为为主要 expected，Spec 为参考。普通 Dialog/嵌入 Fragment 的需求并入宿主页设计，保留来源引用，不为每个源类或 Spec 独立建页面。
 
 ## 设计原则
 
 ### 黑盒可测性
 
-先把 Android 源码证实的行为拆成原子需求，并以 Spec 辅助追溯，再按下列口径处置：
+先把 iOS 源码证实的行为拆成原子需求，并以 Spec 辅助追溯，再按下列口径处置：
 
 | 判定 | 处置 |
 |---|---|
@@ -28,8 +27,8 @@ entry/src/ohosTest/ets/test/ui/pages/<page_short>/
 | 必须跨多个页面才能形成完整业务结果 | 转 journey |
 | 无 UI 触发或只能读取内部逻辑/状态判断 | 转 `arkts-ut-verifier` |
 | 像素、动画手感、主观视觉或设备人工判断 | 转人工/探索性 |
-| Android 源码确认要求真实可见入口，但产品没有实现 | 保留需求，登记导航根缺口；运行后预期 `RED/IMPL_MISSING` |
-| 目标页 landmark 已存在且可到达，但 Android 源码确认要求的业务 action/control 在源码与控件树中完全不存在 | 保留稳定功能点 ID，计划状态记 `IMPL_MISSING_STATIC`；不伪造不可执行测试，由执行阶段合成单一 `RED/IMPL_MISSING` |
+| iOS 源码确认要求真实可见入口，但产品没有实现 | 保留需求，登记导航根缺口；运行后预期 `RED/IMPL_MISSING` |
+| 目标页 landmark 已存在且可到达，但 iOS 源码确认要求的业务 action/control 在源码与控件树中完全不存在 | 保留稳定功能点 ID，计划状态记 `IMPL_MISSING_STATIC`；不伪造不可执行测试，由执行阶段合成单一 `RED/IMPL_MISSING` |
 | 需求本身没有公开 UI 路径或 UI 观察面 | `ERROR/UNREACHABLE_BY_UI`，转 UT/集成测试 |
 
 “未崩溃”“Driver 非空”“测试数据已准备”不是功能结果。
@@ -75,7 +74,7 @@ entry/src/ohosTest/ets/test/ui/pages/<page_short>/
 - 组件没有 ID 时使用设备当前语言下的用户可见文本：文本必须在当前界面唯一，或限制在唯一、可见且稳定的容器语境内消歧。
 - 可见文本需能追溯到生产资源、源码或运行时控件树，不凭空翻译，也不假定固定列表下标。
 - 不得为测试给生产组件新增、改写或拼接 `.id()`，不得生成 ID manifest，也不得用坐标硬点、内部路由或内部状态替代定位。
-- 按首个成立条件分类：构成到页路径的入口、edge action、handler、route 或目标 landmark 根本未实现，登记 `ENTRY_GAP` 导航根 `RED/IMPL_MISSING` 并阻断其计划功能点；目标页 landmark 已存在且可到达，但 Android 源码确认要求的业务 action/control 在源码与控件树中完全不存在，功能点记 `IMPL_MISSING_STATIC`，保留稳定 ID 且不生成测试，执行阶段合成单一 `RED/IMPL_MISSING`，`test_file=null`、`blocked_by=null`、`business_assertions_run=false`；业务 action/control 已存在且可执行，只是可见结果失败、缺失或不符合 Android 源码确定的预期，仍记 `RUNNABLE` 并生成测试，让真实执行自然判 RED；真实页面/路径存在，但必需操作或 landmark 既无可复用 stable ID，也无唯一可见文本/合法关系语义 locator，则按页聚合一份 `ERROR/UNREACHABLE_BY_UI`，仅把受影响需求移出 runnable UI inventory，转 UT/集成测试或人工验证，不生成相关不可执行工件或下游 `BLOCKED_BY_NAVIGATION`，也不修改生产组件。只有 canonical 路径/landmark 无法定位才影响整页；页内单个功能无法定位不取消页面 flow/preflight 或其他可执行测试。
+- 按首个成立条件分类：构成到页路径的入口、edge action、handler、route 或目标 landmark 根本未实现，登记 `ENTRY_GAP` 导航根 `RED/IMPL_MISSING` 并阻断其计划功能点；目标页 landmark 已存在且可到达，但 iOS 源码确认要求的业务 action/control 在源码与控件树中完全不存在，功能点记 `IMPL_MISSING_STATIC`，保留稳定 ID 且不生成测试，执行阶段合成单一 `RED/IMPL_MISSING`，`test_file=null`、`blocked_by=null`、`business_assertions_run=false`；业务 action/control 已存在且可执行，只是可见结果失败、缺失或不符合 iOS 源码确定的预期，仍记 `RUNNABLE` 并生成测试，让真实执行自然判 RED；真实页面/路径存在，但必需操作或 landmark 既无可复用 stable ID，也无唯一可见文本/合法关系语义 locator，则按页聚合一份 `ERROR/UNREACHABLE_BY_UI`，仅把受影响需求移出 runnable UI inventory，转 UT/集成测试或人工验证，不生成相关不可执行工件或下游 `BLOCKED_BY_NAVIGATION`，也不修改生产组件。只有 canonical 路径/landmark 无法定位才影响整页；页内单个功能无法定位不取消页面 flow/preflight 或其他可执行测试。
 
 ## 输出格式
 
@@ -85,7 +84,6 @@ entry/src/ohosTest/ets/test/ui/pages/<page_short>/
 # P{编号} 页面 UI 测试设计：{PageName}
 
 > 页面源码映射：spec/verify/ui/plan/page-source-map.json；MAPPING_REVISION={版本}
-> Android 行为依据：{实际文件/符号/哈希，含宿主内 Dialog/Fragment 相关文件}
 > Page Spec：spec/baseline/ui/page_{编号}_{Xxx}.md
 > Feature Spec：spec/baseline/features/F*.md（列实际读取项）
 > 相关源码：pages/{PageName}.ets, components/{Sub}.ets ...
@@ -140,7 +138,7 @@ entry/src/ohosTest/ets/test/ui/pages/<page_short>/
   2. 重新进入设置页后再次查找 Toggle，其 checked 值仍等于 `!before`。
 - **清理**：点击 Toggle 恢复 before；重新进入页面确认 UI 已恢复。
 - **稳定性**：中；每次页面变化均等待目标 landmark，再重新查找 Toggle。
-- **Spec↔源码差异**：(无 / 具体差异；预期以 Android 源码为主，记录 Spec 差异)
+- **Spec↔源码差异**：(无 / 具体差异；预期以 iOS 源码为主，记录 Spec 差异)
 - **当前实装**：已实现 → 预期 GREEN / 部分或未实现 → 预期 RED（写证据）
 
 ### P0010_UI_save_failure_keeps_previous_value
@@ -169,7 +167,7 @@ entry/src/ohosTest/ets/test/ui/pages/<page_short>/
 - **归属页**：settings
 - **Canonical flow**：`NAV_P0010_FROM_APP_ENTRY`
 - **计划状态**：`IMPL_MISSING_STATIC`
-- **用户预期操作与结果**：点击 Android 源码确认要求的清空入口；列表内容消失且空态出现。
+- **用户预期操作与结果**：点击 iOS 源码确认要求的清空入口；列表内容消失且空态出现。
 - **静态证据**：目标页 landmark 已存在且 canonical flow 可到达；生产源码与运行控件树均不存在清空 action/control，不是 selector 缺失或控件禁用。
 - **生成处置**：保留本稳定功能点 ID，不生成 Page Object 业务动作或 `.test.ets`；执行阶段合成一条 `RED/IMPL_MISSING` outcome，`test_file=null`、`blocked_by=null`、`business_assertions_run=false`。
 - **当前实装**：未实现；若后续补齐可执行 action/control，下一轮改为 `RUNNABLE` 并生成真实 UI 测试。

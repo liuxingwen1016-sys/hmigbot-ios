@@ -1,6 +1,6 @@
 # 实战踩坑百科（22 条）
 
-> 来自 AntennaPod Android→ArkTS 迁移实战（17 Session, 96 文件）。按 7 大类组织。
+> 来自 AntennaPod iOS→ArkTS 迁移实战（17 Session, 96 文件）。按 7 大类组织。
 >
 > **装饰器版本**：本项目锁 ArkTS V2，下文部分踩坑（如 #11 AppStorage 时序）的现象在 V1 装饰器（`@StorageLink`）下出现，**V2 等价问题在 `AppStorageV2.connect` 模式下不再存在**（V2 自动用 `defaultCreator` 初始化）。仍保留 V1 描述以便阅读老代码。
 

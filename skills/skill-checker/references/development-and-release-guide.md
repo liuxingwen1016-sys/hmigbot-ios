@@ -15,7 +15,7 @@ mkdir -p arkts-skills/skills/<skill-name>/references
 命名规范：
 - Domain Skill 以 `arkts-` 前缀命名，例如 `arkts-xxx-manager`
 - Pipeline Skill 以 `a2h-` 前缀命名
-- 分析工具以 `android-` 前缀命名
+- 分析工具以 `iOS-` 前缀命名
 - 全小写，单词间用 `-` 连接
 
 ### 1.2 编写 SKILL.md
@@ -261,7 +261,7 @@ mcp-servers/<server-name>/
 | 情况 | 输出 | 说明 |
 |------|------|------|
 | 正常 | `INFO: [a2h-migration-worker] 28 skills checked` | 所有引用的 Skill 目录都存在 |
-| 无 skills 字段 | `INFO: [a2h-android-analyzer] No skills field in frontmatter, skipping` | 该 Agent 不依赖任何 Skill，跳过 |
+| 无 skills 字段 | `INFO: [a2h-ios-analyzer] No skills field in frontmatter, skipping` | 该 Agent 不依赖任何 Skill，跳过 |
 | 无 frontmatter | `WARN: [xxx] No frontmatter found, skipping` | 文件格式不标准，跳过 |
 | 引用不存在 | `ERROR: [xxx] References non-existent skill: bad-skill` | Skill 目录不存在，必须修复 |
 

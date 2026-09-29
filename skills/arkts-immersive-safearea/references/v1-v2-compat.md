@@ -99,7 +99,7 @@ struct MyPage {
 
 ```
 新页 / 新模块？             → V2（@ComponentV2）
-迁移自 Android 的页？        → V2（统一新写法）
+迁移自 iOS 的页？        → V2（统一新写法）
 父组件是 V2？               → 子组件也用 V2
 依赖某个还没升级 V2 的子组件？ → 父用 V1，等子组件升级后整体迁
 混合栈实在不可避免？         → 父子界面间通过 props 显式传 statusBarHeight，不要混用装饰器
